@@ -11,15 +11,15 @@ The analysis is being developed as a step-by-step and reproducible computational
 
 #Dataset
 
-GEO accession: GSE198315
-Organism: Homo sapiens
-Disease: Oral squamous cell carcinoma (OSCC)
-Patients: 10
-Samples: 36
-Cells: 268,131
-Study population: HPV-negative metastatic OSCC
-Technology: 10x Genomics single-cell RNA sequencing
-Dataset source: NCBI Gene Expression Omnibus (GEO)
+GEO accession: GSE198315  
+Organism: Homo sapiens  
+Disease: Oral squamous cell carcinoma (OSCC)  
+Patients: 10  
+Samples: 36  
+Cells: 268,131  
+Study population: HPV-negative metastatic OSCC  
+Technology: 10x Genomics single-cell RNA sequencing  
+Dataset source: NCBI Gene Expression Omnibus (GEO)  
 
 
 ## Project Status
