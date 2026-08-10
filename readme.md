@@ -44,6 +44,34 @@ NT → TP → TC
 It can broadly represent the transition from surrounding non-tumor tissue toward the tumor center, while mLN provides information about the metastatic environment.  
 This design is particularly relevant for studying intratumoral heterogeneity, the tumor microenvironment, field cancerization, and cellular states associated with tumor progression and metastasis. The study specifically investigated spatial differences between tumor core, tumor periphery, surrounding tissue, and metastatic lymph nodes in advanced HPV-negative OSCC.  
 
+# Dataset Acquisition
+The single-cell RNA-seq dataset used in this project was obtained from the NCBI Gene Expression Omnibus (GEO), a public repository for functional genomics data. Go to the NCBI Gene Expression Omnibus (GEO) website and type GSE198315 on the search bar, which will lead to a OSCC study titled "Multiregional single-cell profiling reveals extensive field cancerization and an immunosuppressive microenvironment in oral squamous cell carcinoma."    
+
+ [Click to view Dataset](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE198315)     
+
+ <img width="918" height="923" alt="image" src="https://github.com/user-attachments/assets/9383f148-c5b8-4d28-9693-ca38676007d3" />    
+
+
+GEO may provide several types of files for a sequencing study. These files should not automatically be treated as equivalent.  
+Raw sequencing data → generally associated with the SRA  
+Processed expression/count data → may be provided as supplementary files  
+Metadata/sample information → available through the GEO Series and individual GSM records  
+Series-level files → describe or summarize the overall study  
+Therefore, before downloading and analysing the data, the available files were examined to determine what each file contains, at what processing stage it was generated, and which file is appropriate for the planned analysis. This distinction is important for ensuring that the subsequent scRNA-seq workflow is based on the correct input data.  
+
+<img width="922" height="290" alt="image" src="https://github.com/user-attachments/assets/ef043c90-120c-42b1-a6c9-163c930910bf" />    
+
+# Data Selection
+The available files were examined before downloading to determine which representation of the data is appropriate for downstream single-cell RNA-seq analysis.  
+The `barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz` files together represent a sparse single-cell expression matrix that can be imported into a Seurat workflow.  
+The `GSE198315_OSCC_UMI_count_matrix.txt.gz` file provides another processed representation of the UMI count data.  
+The appropriate input will be selected after examining the contents and structure of these files.    
+
+TO BE CONTINUED..
+
+
+
+
 
 ## Project Status
 
