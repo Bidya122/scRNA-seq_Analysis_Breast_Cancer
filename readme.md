@@ -65,7 +65,7 @@ Therefore, before downloading and analysing the data, the available files were e
 The available files were examined before downloading to determine which representation of the data is appropriate for downstream single-cell RNA-seq analysis.  
 The `barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz` files together represent a sparse single-cell expression matrix that can be imported into a Seurat workflow.  
 The `GSE198315_OSCC_UMI_count_matrix.txt.gz` file provides another processed representation of the UMI count data.  
-The appropriate input will be selected after examining the contents and structure of these files.    
+The appropriate input was selected after examining the contents and structure of these files.    
 
 TO BE CONTINUED..
 
