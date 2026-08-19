@@ -8,15 +8,15 @@ The primary aim of this project is to characterize the cellular composition of p
 
 ## Dataset
 
-GEO accession: GSE245601
-Organism: Homo sapiens
-Disease: ER-positive, HER2-negative breast cancer
-Primary tumor samples: 10
-Conditions: Control and Tamoxifen
-Treatment: 10 µM tamoxifen for 12 hours ex vivo
-Technology: 10x Genomics single-cell RNA sequencing
-Data format: 10x Genomics .h5 expression matrices
-Dataset source: NCBI Gene Expression Omnibus (GEO)
+GEO accession: GSE245601    
+Organism: Homo sapiens    
+Disease: ER-positive, HER2-negative breast cancer    
+Primary tumor samples: 10    
+Conditions: Control and Tamoxifen    
+Treatment: 10 µM tamoxifen for 12 hours ex vivo    
+Technology: 10x Genomics single-cell RNA sequencing    
+Data format: 10x Genomics .h5 expression matrices    
+Dataset source: NCBI Gene Expression Omnibus (GEO)    
 
 ## Sample Types and Abbreviations
 
