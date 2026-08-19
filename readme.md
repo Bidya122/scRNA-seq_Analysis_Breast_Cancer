@@ -75,7 +75,8 @@ The single-cell RNA-seq dataset used in this project was obtained from the NCBI 
 
  [Click to view Dataset](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE245601)     
 
- <img width="918" height="923" alt="image" src="https://github.com/user-attachments/assets/9383f148-c5b8-4d28-9693-ca38676007d3" />    
+<img width="921" height="926" alt="image" src="https://github.com/user-attachments/assets/21ef8d0d-e67c-4046-a980-16d2deff7b86" />    
+   
 
 TO BE CONTINUED..
 
