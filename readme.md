@@ -61,7 +61,7 @@ The primary treatment-response analysis will focus on paired primary tumor sampl
 
 <img width="753" height="733" alt="image" src="https://github.com/user-attachments/assets/e7fbd7bf-a117-4104-ad5f-b30147249595" />    
 
-Phase 1 — Normal vs Tumor    
+Phase 1 — Normal Control vs Tumor Control    
 Normal: 2 samples    
 Tumor Control: 10 samples    
 So Phase 1 should be Normal vs Tumor Control, giving 12 samples total.    
