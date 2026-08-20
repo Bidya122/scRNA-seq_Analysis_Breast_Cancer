@@ -77,7 +77,59 @@ The single-cell RNA-seq dataset used in this project was obtained from the NCBI 
  [Click to view Dataset](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE245601)     
 
 <img width="921" height="926" alt="image" src="https://github.com/user-attachments/assets/21ef8d0d-e67c-4046-a980-16d2deff7b86" />    
-   
+Below is the workflow, The commands are self explanatory with comments and the .Rmd script is also provided.    
+
+## 1. Dataset Download
+The GEO Series GSE245601 was accessed using the GEOquery package. The associated GSM accession IDs were extracted from the GEO Series record, and a metadata table containing the GSM IDs and sample descriptions was generated and saved as a CSV file.    
+Supplementary files associated with each GSM were then downloaded using getGEOSuppFiles(). A tryCatch() structure was implemented to report failed downloads while allowing the loop to continue with the remaining samples.    
+
+```bash
+library(GEOquery)
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
+dir.create(base_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Retrieve the GEO Series record for GSE245601
+# GSEMatrix = FALSE retrieves the GEO record and its associated GSM entries without loading the expression matrix
+gse <- getGEO("GSE245601", GSEMatrix = FALSE)   
+gsm_ids <- names(gse@gsms)  # Extract all GSM accession IDs associated with the GSE
+gsm_ids 
+
+##To create a metadata table for the GSM ids and their description
+gsm_info <- do.call( rbind,   
+  lapply(gse@gsms, function(x) {
+    data.frame(
+      GSM = x@header$geo_accession,
+      Title = x@header$title,
+      stringsAsFactors = FALSE)
+  })
+)
+gsm_info
+write.csv( gsm_info, "D:/Bidya Work/single/GSE245601_Breast_Cancer/GSE245601_GSM_metadata.csv", row.names = FALSE) 
+
+# Download supplementary files for all GSM samples
+# tryCatch() allows the loop to continue even if an individual download fails
+
+for (gsm in gsm_ids) {   
+  message("\n==============================")
+  message("Downloading: ", gsm)
+  message("==============================")
+  tryCatch({
+    getGEOSuppFiles(
+      gsm,
+      baseDir = base_dir
+    )
+    message("✓ Completed: ", gsm)
+    }, error = function(e) {
+    message("✗ Failed: ", gsm)
+    message("Error: ", e$message)
+     })
+}
+```
+<img width="1437" height="50" alt="image" src="https://github.com/user-attachments/assets/aa8423fa-3787-47e2-ba9b-54d112473676" />
+
+<img width="1648" height="612" alt="image" src="https://github.com/user-attachments/assets/adddee05-dd78-49e8-b492-5c03efd06bb4" />
+
+So, each of the GSM files were fetched and supplementary files related to each of the GSM files were downloaded into separate folders. Each folder containing the .h5 file which will be used in the downstream process. 
 
 TO BE CONTINUED..
 
