@@ -78,8 +78,19 @@ The single-cell RNA-seq dataset used in this project was obtained from the NCBI 
 
 <img width="921" height="926" alt="image" src="https://github.com/user-attachments/assets/21ef8d0d-e67c-4046-a980-16d2deff7b86" />    
 Below is the workflow, The commands are self explanatory with comments and the .Rmd script is also provided.    
+## 1. Library Download
+```bash
+# Install GEOquery from Bioconductor
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
-## 1. Dataset Download
+BiocManager::install("GEOquery")
+
+# Load GEOquery
+library(GEOquery)
+```
+
+## 2. Dataset Download
 The GEO Series GSE245601 was accessed using the GEOquery package. The associated GSM accession IDs were extracted from the GEO Series record, and a metadata table containing the GSM IDs and sample descriptions was generated and saved as a CSV file.    
 Supplementary files associated with each GSM were then downloaded using getGEOSuppFiles(). A tryCatch() structure was implemented to report failed downloads while allowing the loop to continue with the remaining samples.    
 
