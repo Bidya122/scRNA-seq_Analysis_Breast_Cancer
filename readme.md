@@ -78,6 +78,7 @@ The single-cell RNA-seq dataset used in this project was obtained from the NCBI 
 
 <img width="921" height="926" alt="image" src="https://github.com/user-attachments/assets/21ef8d0d-e67c-4046-a980-16d2deff7b86" />    
 Below is the workflow, The commands are self explanatory with comments and the .Rmd script is also provided.    
+
 ## 1. Library Download
 ```bash
 # Install GEOquery from Bioconductor
