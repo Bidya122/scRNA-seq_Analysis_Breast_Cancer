@@ -141,9 +141,29 @@ for (gsm in gsm_ids) {
 
 <img width="1648" height="612" alt="image" src="https://github.com/user-attachments/assets/adddee05-dd78-49e8-b492-5c03efd06bb4" />
 
-So, each of the GSM files were fetched and supplementary files related to each of the GSM files were downloaded into separate folders. Each folder containing the .h5 file which will be used in the downstream process. 
+So, each of the GSM files were fetched and supplementary files related to each of the GSM files were downloaded into separate folders. Each folder containing the .h5 file which will be used in the downstream process. Next I am only doing a sanity check of my data to ensure if I have all the files with the correct names to start with my analysis
 
-TO BE CONTINUED..
+```bash
+##In this chunk I am only checking if I have all the required data with the correct names or not
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"
+files <- list.files(base_dir, pattern = "\\.h5$", recursive = TRUE, full.names = TRUE) ##list of files in the base_dir with.h5 as names
+length(files) 
+basename(files)
+gsm_info 
+library(Seurat)
+test <- Read10X_h5(files[1])  ##testing one file first
+class(test) #"dgCMatrix"
+dim(test) #33538 genes 4267 cells
+head(rownames(test))
+head(colnames(test))
+test[1:5, 1:5]
+```
+<img width="1235" height="328" alt="image" src="https://github.com/user-attachments/assets/adc8555e-ff21-4644-84ef-de9555b5ef68" />
+
+
+
+
+
 
 
 
