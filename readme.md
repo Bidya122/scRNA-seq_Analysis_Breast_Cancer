@@ -160,6 +160,31 @@ test[1:5, 1:5]
 ```
 <img width="1235" height="328" alt="image" src="https://github.com/user-attachments/assets/adc8555e-ff21-4644-84ef-de9555b5ef68" />
 
+## 3. Creating Individual seurat objects per sample
+
+```bash
+## Each .h5 file contains the raw UMI count matrix of one sample.
+## Here, each count matrix is read and converted into an individual Seurat object. So, basically individual seurat objects for each sample
+
+seurat_list <- lapply(files, function(x) {    #x=individual file names all 26, so iteration x=1 and continue the function, then x=2 then continue the funtion with second file.
+  counts <- Read10X_h5(x)
+  
+  CreateSeuratObject(
+    counts = counts,   #Use the count matrix I just created (counts) as the raw expression data.
+    project = basename(x),  #gives the Seurat object a project name based on the filename.
+    min.cells = 3,   #Keep a gene only if it is detected in at least 3 cells.
+    min.features = 200  #Keep a cell only if it has at least 200 detected genes.
+  ) 
+})
+
+names(seurat_list) <- basename(files) 
+length(seurat_list)       ## Number of Seurat objects created
+names(seurat_list)        ## Names of the samples
+```
+<img width="1078" height="212" alt="image" src="https://github.com/user-attachments/assets/ad09b45b-e73f-451f-9957-0c69e39a9ca8" />
+
+This shows I have successfully created individual seurat objects per sample.
+
 
 
 
