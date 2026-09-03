@@ -216,6 +216,33 @@ colnames(seurat_list[[1]]@meta.data)
 
 Individual .h5 files from GSE245601 were imported using Read10X_h5() and converted into Seurat objects using CreateSeuratObject(). Basic filtering was performed using min.cells = 3 and min.features = 200. The 26 sample-specific Seurat objects were stored in seurat_list. Sample identity and experimental information were retained through the existing orig.ident metadata. GSM accession numbers and sample descriptions were added to the metadata of each Seurat object using the corresponding GEO sample information (gsm_info). This provides explicit GEO identifiers and descriptive sample information for each cell and facilitates sample tracking and downstream analysis but the original sample identity was also retained in `orig.ident`.
 
+## 5. Merging the Seurat Objects
+
+```bash
+sapply(seurat_list, ncol)
+sapply(seurat_list, function(obj) {
+  sum(duplicated(rownames(GetAssayData(obj, layer = "counts"))))  ##checking duplicates
+})
+clean_seurat_list <- seurat_list ##just easier to remember for the downflow
+
+##Now next I merged all the 26 seurat objects to one so I could do QC and all necessary steps together
+
+seurat_combined <- merge(   #merge(x = first_object, y = other_object(s))
+  x = clean_seurat_list[[1]],
+  y = clean_seurat_list[-1],
+  add.cell.ids = names(clean_seurat_list)
+) 
+class(seurat_combined)
+dim(seurat_combined)
+unique(seurat_combined$orig.ident)
+head(colnames(seurat_combined))
+
+saveRDS(                                  ##so that next time we can upload this file and start working. 
+  seurat_combined,
+  file = file.path(outputDir, "GSE245601_seurat_combined_preQC.rds")
+)
+```
+<img width="1443" height="327" alt="image" src="https://github.com/user-attachments/assets/6e4690b8-bf6f-4029-9abe-f852643c4477" />
 
 
 
