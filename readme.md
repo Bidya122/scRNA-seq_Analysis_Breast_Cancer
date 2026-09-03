@@ -185,6 +185,37 @@ names(seurat_list)        ## Names of the samples
 
 This shows I have successfully created individual seurat objects per sample.
 
+## 4. Adding Metadata to the Seurat Object
+
+```bash
+basename(files)
+head(gsm_info)
+colnames(gsm_info)
+
+# Extract GSM ID from each Seurat object name
+gsm_ids <- sub("_.*", "", names(seurat_list))
+
+# Check that every GSM ID exists in the metadata
+all(gsm_ids %in% gsm_info$GSM)   ##TRUE
+
+##Go through each Seurat object, find which GSM it belongs to, then add that GSM and its Title to the object's metadata. Because for now our seurat objects of every sample only has the count matrix not metadata or anyother detail. So we are adding this detail to our seurat object. 
+
+for (i in seq_along(seurat_list)) {  #For each position/index in my Seurat list, do the following.
+  
+  gsm <- gsm_ids[i]
+  
+  seurat_list[[i]]$GSM <- gsm_info[gsm, "GSM"]
+  seurat_list[[i]]$Title <- gsm_info[gsm, "Title"]
+}
+
+head(seurat_list[[1]]@meta.data)
+colnames(seurat_list[[1]]@meta.data)
+```
+<img width="681" height="50" alt="image" src="https://github.com/user-attachments/assets/733fbdc5-36e4-4b43-8799-73d66b208c6f" />
+<img width="1807" height="305" alt="image" src="https://github.com/user-attachments/assets/100fd395-f9c4-4eb4-b503-c1c3a5f13c59" />
+
+Individual .h5 files from GSE245601 were imported using Read10X_h5() and converted into Seurat objects using CreateSeuratObject(). Basic filtering was performed using min.cells = 3 and min.features = 200. The 26 sample-specific Seurat objects were stored in seurat_list. Sample identity and experimental information were retained through the existing orig.ident metadata. GSM accession numbers and sample descriptions were added to the metadata of each Seurat object using the corresponding GEO sample information (gsm_info). This provides explicit GEO identifiers and descriptive sample information for each cell and facilitates sample tracking and downstream analysis but the original sample identity was also retained in `orig.ident`.
+
 
 
 
