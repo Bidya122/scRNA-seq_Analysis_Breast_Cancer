@@ -233,7 +233,7 @@ seurat_combined <- merge(   #merge(x = first_object, y = other_object(s))
   add.cell.ids = names(clean_seurat_list)
 ) 
 class(seurat_combined)
-dim(seurat_combined)
+dim(seurat_combined) #131,784 cells and 26,506 genes
 unique(seurat_combined$orig.ident)
 head(colnames(seurat_combined))
 
@@ -244,7 +244,9 @@ saveRDS(                                  ##so that next time we can upload this
 ```
 <img width="1443" height="327" alt="image" src="https://github.com/user-attachments/assets/6e4690b8-bf6f-4029-9abe-f852643c4477" />
 
-
+The 26 sample-specific Seurat objects were merged into a single Seurat object to enable joint downstream analysis of the complete GSE245601 dataset.    
+The orig.ident metadata was retained to preserve the identity of the original sample for each cell. add.cell.ids was used during merging to prefix each cell barcode with its corresponding sample name, ensuring that cells could be traced back to their source sample and preventing barcode collisions between samples.    
+The resulting combined Seurat object contained 131,784 cells and 26,506 genes before QC filtering.    
 
 
 
