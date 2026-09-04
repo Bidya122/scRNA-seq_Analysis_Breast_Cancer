@@ -250,7 +250,7 @@ The resulting combined Seurat object contained 131,784 cells and 26,506 genes be
 
 ## 6. Load the Libraries
 
-``` {r Load Library}
+```bash
 library(Seurat)
 library(SeuratDisk)
 library(dplyr)
@@ -268,7 +268,16 @@ library(batchelor)
 library(zellkonverter)
 library(SingleCellExperiment)
 ```
-
+- Loading required packages for single-cell RNA-seq data would make the process easier for processing and analysis.
+- Seurat and SingleCellExperiment are used for single-cell data handling and analysis.
+- SeuratDisk and zellkonverter are used for conversion between Seurat, h5Seurat,
+- H5AD, and SingleCellExperiment formats.
+- dplyr is used for data manipulation, while ggplot2, ggExtra, RColorBrewer,
+- scales, and dittoSeq are used for visualization and plotting.
+- R.utils provides utility functions for file and data handling.
+- openxlsx is used for reading and writing Excel files.
+- HGNChelper is used for checking and correcting gene nomenclature.
+- Harmony and batchelor provide methods for batch correction and integration of single-cell datasets.
 
 
 
