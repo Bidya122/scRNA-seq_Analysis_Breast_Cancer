@@ -279,7 +279,58 @@ library(SingleCellExperiment)
 - HGNChelper is used for checking and correcting gene nomenclature.
 - Harmony and batchelor provide methods for batch correction and integration of single-cell datasets.
 
+## 7. Calculate QC Metrics for Combined Seurat Object
 
+```bash
+#For the directories
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  
+outputDir<- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Output"
+plotDir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Plots"
+
+
+#Load the .RDS object to R and check
+seurat_combined <- readRDS(file.path(outputDir, "GSE245601_seurat_combined_preQC.rds"))
+class(seurat_combined)
+dim(seurat_combined) # 26506 x 131784
+head(colnames(seurat_combined))  ## To view the first 20 row names (gene names) to check the gene naming format
+unique(seurat_combined$orig.ident)
+head(seurat_combined@meta.data)
+
+# Calculate the percentage of mitochondrial gene counts per cell."^MT-" matches genes beginning with "MT-".
+# The result is stored in the Seurat metadata as "percent.mt".
+seurat_combined[["percent.mt"]] <- PercentageFeatureSet(
+  seurat_combined,
+  pattern = "^MT-"
+)
+
+# Calculate the percentage of ribosomal gene counts per cell. "^RPL|^RPS" matches genes beginning with "RPL" or "RPS".
+# The result is stored in the Seurat metadata as "percent.rb".
+seurat_combined[["percent.rb"]] <- PercentageFeatureSet(
+  seurat_combined,
+  pattern = "^RPL|^RPS"
+)
+
+colnames(seurat_combined@meta.data)  # Display metadata column names to confirm that percent.mt and percent.rb have been successfully added.
+summary(seurat_combined$percent.mt) # Summarize the distribution of mitochondrial percentages across cells.
+summary(seurat_combined$percent.rb) # Summarize the distribution of ribosomal percentages across cells.
+```
+<img width="1311" height="150" alt="image" src="https://github.com/user-attachments/assets/f593b9d8-13bd-47d8-8029-85a1080c3b51" />
+
+- `percent.mt — mitochondrial percentage`    
+- Median = 2.94% → half of the cells have mitochondrial counts below ~2.94%.    
+- 75% of cells are below ~5.03% → most cells have relatively low mitochondrial contribution.    
+- Maximum = 96.51% → there are some extreme cells dominated by mitochondrial transcripts.    
+And the important observation is the gap between 3rd quartile = 5.03% and Maximum = 96.51%. That strongly suggests that the extremely high values are concentrated in a relatively small subset of cells rather than representing the general population. The majority of cells show low mitochondrial transcript proportions, while a small subset exhibits extremely high mitochondrial percentages and may represent low-quality cells requiring further QC assessment.
+
+- `percent.rb — ribosomal percentage`    
+- 25% of cells have ribosomal percentages below ~13.1%.       
+- Median is ~17.85%.       
+- 75% of cells are below ~24.08%.      
+- A small subset reaches very high values, up to ~71.9%.    
+An important distinction is High ribosomal percentage does NOT automatically mean poor-quality cells. Ribosomal genes are highly expressed housekeeping genes, and their proportion can naturally vary between cells/cell types.    
+
+The mitochondrial percentage provides an indicator of cell quality, as cells with unusually high proportions of mitochondrial transcripts may represent stressed, damaged, or dying cells. Ribosomal gene percentage was included as an additional transcriptomic QC metric to assess the composition of RNA transcripts across cells. These metrics will be visualized together with nFeature_RNA and nCount_RNA to assess their distributions and identify appropriate cell-level QC thresholds before filtering.    
+  
 
 
 ## Project Status
