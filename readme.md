@@ -248,7 +248,26 @@ The 26 sample-specific Seurat objects were merged into a single Seurat object to
 The orig.ident metadata was retained to preserve the identity of the original sample for each cell. add.cell.ids was used during merging to prefix each cell barcode with its corresponding sample name, ensuring that cells could be traced back to their source sample and preventing barcode collisions between samples.    
 The resulting combined Seurat object contained 131,784 cells and 26,506 genes before QC filtering.    
 
+## 6. Load the Libraries
 
+``` {r Load Library}
+library(Seurat)
+library(SeuratDisk)
+library(dplyr)
+library(R.utils)  
+library(ggplot2)
+library(ggExtra)
+library(RColorBrewer)
+library(openxlsx)
+library(dplyr)
+library(scales)
+library(HGNChelper)
+library(dittoSeq)
+library(harmony)
+library(batchelor)
+library(zellkonverter)
+library(SingleCellExperiment)
+```
 
 
 
