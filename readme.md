@@ -313,8 +313,11 @@ seurat_combined[["percent.rb"]] <- PercentageFeatureSet(
 colnames(seurat_combined@meta.data)  # Display metadata column names to confirm that percent.mt and percent.rb have been successfully added.
 summary(seurat_combined$percent.mt) # Summarize the distribution of mitochondrial percentages across cells.
 summary(seurat_combined$percent.rb) # Summarize the distribution of ribosomal percentages across cells.
+summary(seurat_combined$nFeature_RNA) #Summarize the detection of no. of genes in the dataset basically complexity
+summary(seurat_combined$nCount_RNA) #Summerizes total RNA
 ```
-<img width="1311" height="150" alt="image" src="https://github.com/user-attachments/assets/f593b9d8-13bd-47d8-8029-85a1080c3b51" />
+
+<img width="1306" height="257" alt="image" src="https://github.com/user-attachments/assets/a2383a40-2326-4ebf-a956-31250842e3e0" />
 
 - `percent.mt — mitochondrial percentage`    
 - Median = 2.94% → half of the cells have mitochondrial counts below ~2.94%.    
@@ -331,7 +334,9 @@ An important distinction is High ribosomal percentage does NOT automatically mea
 
 The mitochondrial percentage provides an indicator of cell quality, as cells with unusually high proportions of mitochondrial transcripts may represent stressed, damaged, or dying cells. Ribosomal gene percentage was included as an additional transcriptomic QC metric to assess the composition of RNA transcripts across cells. These metrics will be visualized together with nFeature_RNA and nCount_RNA to assess their distributions and identify appropriate cell-level QC thresholds before filtering.    
   
-
+nFeature_RNA: The median was 1,710 genes/cell, with 50% of cells containing between 897 and 3,342 detected genes. The maximum was 12,738 genes, indicating a small number of cells with very high gene detection.    
+nCount_RNA: The median was 4,502 counts/cell, while 50% of cells had between 1,830 and 13,132 counts. The maximum reached 784,177 counts, indicating a small number of cells with exceptionally high RNA counts.    
+Overall, most cells showed moderate RNA content and gene detection, but the high maximum values suggest the presence of potential outlier cells that will be examined during QC.    
 
 ## Project Status
 
