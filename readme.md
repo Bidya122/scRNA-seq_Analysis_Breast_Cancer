@@ -342,6 +342,69 @@ Overall, most cells showed moderate RNA content and gene detection, but the high
 
 Initial QC was performed on the complete merged dataset to identify and remove low-quality cells and technical outliers before downstream biological analysis. QC distributions were examined across individual samples to ensure that filtering did not introduce sample-specific bias. 
 
+```bash
+study_id <- "GSE245601" # Define study ID
+# Add sample information to metadata
+seurat_combined <- AddMetaData(seurat_combined,  metadata = seurat_combined$orig.ident,  col.name = "Sample") #Creates a new metadata column called Sample, using the existing orig.ident.
+head(seurat_combined@meta.data)
+
+# Function to generate and save QC violin plots for each sample
+save_violin_plots_separate <- function(
+  seurat_obj,  
+  plotDir,
+  study_id,
+  features = c( "nCount_RNA", "nFeature_RNA",  "percent.mt", "percent.rb" )
+) {
+ 
+  # Create plot directory if it does not already exist
+  if (!dir.exists(plotDir)) {
+    dir.create(plotDir, recursive = TRUE)
+  }
+  
+# Extract cell-level metadata
+  meta <- seurat_obj@meta.data
+
+# Convert sample identity to factor for plotting
+  meta$sample <- as.factor(meta$Sample)
+
+# Generate one plot for each QC metric
+  for (feat in features) {
+
+# Check whether the QC metric exists
+    if (!feat %in% colnames(meta)) {
+      warning(paste("Skipping", feat, "- not found in metadata"))
+      next
+    }
+
+    # Violin plot with boxplot overlay
+    p <- ggplot( meta, aes(x = sample, y = .data[[feat]])) + 
+      geom_violin( trim = TRUE, fill = "Red", alpha = 0.7) +
+      geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.6) +
+      labs( title = feat, x = "Sample",  y = feat ) + theme_bw(base_size = 14) +  theme(
+        axis.text.x = element_text(angle = 45,  hjust = 1),
+        plot.title = element_text(hjust = 0.5)
+      )
+
+    # Save plot
+    ggsave(filename = file.path(plotDir, paste0(study_id, "_preQC_", feat, "_violin.png")),
+      plot = p, width = 30, height = 10, dpi = 600, bg = "white" )
+  }
+}
+
+save_violin_plots_separate( seurat_combined, plotDir, study_id)    #Run the above function
+```
+<img width="1917" height="641" alt="image" src="https://github.com/user-attachments/assets/e41d0447-9897-4726-987d-22debbc5fb70" />
+
+<img width="1917" height="647" alt="image" src="https://github.com/user-attachments/assets/d5f18bda-ec80-458a-90e6-a733a08e277f" /> 
+
+<img width="1808" height="608" alt="image" src="https://github.com/user-attachments/assets/ef0df905-e6fb-40b5-84d7-597d59280cca" />
+
+<img width="1807" height="607" alt="image" src="https://github.com/user-attachments/assets/5e1bef39-e211-4628-8318-2709ca500a1f" />
+
+
+
+
+
 
 
 
