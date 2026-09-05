@@ -401,6 +401,48 @@ save_violin_plots_separate( seurat_combined, plotDir, study_id)    #Run the abov
 
 <img width="1807" height="607" alt="image" src="https://github.com/user-attachments/assets/5e1bef39-e211-4628-8318-2709ca500a1f" />
 
+```bash
+# Scatter plot of nCount vs nFeature with marginal histograms
+
+study_id <- "GSE245601" # Define study ID
+density_scatter_plot <- function(seurat_obj, filename) {
+  
+  ## Create a data frame containing QC metrics for each cell
+  df <- data.frame(
+    log1p_nCount_RNA = log1p(seurat_obj$nCount_RNA),       # Total RNA molecules per cell
+    log1p_nFeature_RNA = log1p(seurat_obj$nFeature_RNA), # Number of detected genes per cell
+    GSM = seurat_obj$GSM
+  )
+  
+  ## Generate scatter plot
+  p <- ggplot( df, aes(x = log1p_nCount_RNA, y = log1p_nFeature_RNA, color = GSM)) +
+    geom_point(alpha = 0.3, size = 1.0) +
+    theme_minimal() +
+    theme(
+      plot.margin = margin(10, 20, 20, 30),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10) ,
+      legend.position.inside = c(0.05, 0.95),
+      legend.justification = c("left", "top"),
+      legend.key.size = unit(0.5, "cm")) +
+    guides(  color = guide_legend(
+        override.aes = list(size = 5) ) ) +
+    labs( x = "log1p(nCount_RNA)",  y = "log1p(nFeature_RNA)", colour = "Sample") +
+    guides(colour = guide_legend(ncol = 1))
+  
+  ## Add marginal histograms
+  p <- ggMarginal( p, type = "histogram", fill = "skyblue", bins = 40)
+  
+  ## Save plot
+  ggsave( filename, plot = p,  width = 8, height = 10,  dpi = 600, bg = "white" )
+}
+
+density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_preQC_density-scatter.png")))
+```
+
+<img width="743" height="928" alt="image" src="https://github.com/user-attachments/assets/906564ab-52c9-4785-8368-d9b50b4f0e12" />
+
+
 
 
 
