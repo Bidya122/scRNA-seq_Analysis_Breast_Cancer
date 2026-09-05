@@ -338,6 +338,44 @@ nFeature_RNA: The median was 1,710 genes/cell, with 50% of cells containing betw
 nCount_RNA: The median was 4,502 counts/cell, while 50% of cells had between 1,830 and 13,132 counts. The maximum reached 784,177 counts, indicating a small number of cells with exceptionally high RNA counts.    
 Overall, most cells showed moderate RNA content and gene detection, but the high maximum values suggest the presence of potential outlier cells that will be examined during QC.    
 
+## 8. Pre-QC Visualization
+
+Initial QC was performed on the complete merged dataset to identify and remove low-quality cells and technical outliers before downstream biological analysis. QC distributions were examined across individual samples to ensure that filtering did not introduce sample-specific bias. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Project Status
 
 🚧 **Work in progress**
