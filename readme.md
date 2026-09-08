@@ -442,6 +442,21 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 
 <img width="743" height="928" alt="image" src="https://github.com/user-attachments/assets/906564ab-52c9-4785-8368-d9b50b4f0e12" />
 
+**Interpretation of the preQC for filtering**     
+
+`nFeature_RNA` — Observations:     
+- Most samples do not have a distinct lower tail.    
+- The two T47D samples have longer lower tails, but these tails are thin.    
+- All samples start from y = 0, but the violins are not widest at 0.    
+- Near y = 0, the violins become progressively narrower, but they do not form an extremely thin line.    
+- The violins are widest around nFeature_RNA = 2,500–4,000.    
+- Most samples have a similar overall violin shape, although there are some differences between samples.    
+- When comparing the tamoxifen-treated and control samples within the same sample/group, their distributions look ~80% similar.    
+- At the upper end, above approximately 5,000 nFeature_RNA, the distribution is mostly a thin line/upper extension, rather than a wide population.
+
+*The major cell population across samples is concentrated around 2,500–4,000 detected genes. Lower nFeature_RNA values are present, extending toward 0, but the density decreases toward the lower end rather than remaining maximal there. The high-feature region above ~5,000 is predominantly represented by thin upper extensions/outliers. T47D samples show somewhat longer lower tails compared with the other samples.*
+
+`nCount_RNA` -- Observations:
 
 
 
