@@ -483,6 +483,20 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 
 *The majority of cells showed mitochondrial RNA proportions concentrated around 3–5%, with only a small number of cells extending above ~10%. The absence of a broad high-mitochondrial population suggests that elevated mitochondrial content is not a widespread feature across the dataset. However, cells in the upper tail should be evaluated together with nFeature_RNA and nCount_RNA before determining an appropriate filtering threshold.*
 
+`percent.rb` -- Observations (Violin Plot):
+- In the overall graph, the violins show a wide distribution approximately between 10% and 30%.
+- Unlike nCount_RNA and nFeature_RNA, the violins are clearly visible across the samples.
+- The treated and control samples show broadly similar distributions, with only a few exceptions.
+- All samples show an upper tail extending beyond the main distribution.
+- The overall distribution pattern is broadly similar across the samples.
+
+*The percent.rb distributions were broadly similar across samples, with the majority of cells showing ribosomal RNA proportions within approximately 10–30%. All samples displayed an upper tail, indicating a subset of cells with higher ribosomal RNA proportions. However, elevated ribosomal content alone is not sufficient evidence of poor cell quality and should be evaluated jointly with nFeature_RNA, nCount_RNA, and percent.mt before defining a filtering threshold.*
+
+The density plot showed a positive association between nCount_RNA and nFeature_RNA, with the majority of cells forming a dense diagonal population. This indicates that cells with higher total RNA counts generally had a greater number of detected genes. Cells at the low-count/low-feature end and extreme high-count/high-feature regions were identified as populations requiring further evaluation using the other QC metrics rather than being excluded based on this plot alone.    
+
+Final Interpretation of PreQC Visualization and Analytics:     
+
+
 
 
 
