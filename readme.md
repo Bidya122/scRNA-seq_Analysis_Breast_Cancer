@@ -457,8 +457,21 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 *The major cell population across samples is concentrated around 2,500–4,000 detected genes. Lower nFeature_RNA values are present, extending toward 0, but the density decreases toward the lower end rather than remaining maximal there. The high-feature region above ~5,000 is predominantly represented by thin upper extensions/outliers. T47D samples show somewhat longer lower tails compared with the other samples.*
 
 `nCount_RNA` -- Observations (Violin Plot):
+- The violin distributions across all 26 samples are very small/petite.
+- Most samples do not show a distinct lower tail.
+- The two T47D samples show small lower tails.
+- The y-axis starts at 0e+00.
+- The violins are very narrow near the bottom of the plot.
+- The boxplots are also positioned very close to the bottom of the y-axis.
+- Most samples extend up to approximately 2 × 10⁵ or below.
+- One sample extends much further, to approximately 8 × 10⁵.
+- The extension toward 8 × 10⁵ is mostly a very thin line, rather than a wide distribution.
+- The large range of that one sample compresses the distributions of the other samples visually.
+- A y-axis display limit around 1 × 10⁵ may make the distributions of the majority of samples easier to visualize.
+- This 1 × 10⁵ value is being considered only as a visualization limit at this stage, not as a filtering cutoff.
 
-
+*The nCount_RNA violin plots showed very narrow distributions across most samples. The majority of samples extended to approximately 2 × 10⁵ counts or below, whereas one sample showed an extended range reaching approximately 8 × 10⁵. This upper extension was predominantly a thin line rather than a broad distribution. The large range of this sample compressed the distributions of the remaining samples near the lower end of the y-axis. The two T47D samples showed small lower extensions compared with the other samples. For clearer visualization of the majority of samples, an upper display limit of approximately 1 × 10⁵ could be considered.*  
+`percent.mt` -- Observations (Violin Plot):
 
 
 
