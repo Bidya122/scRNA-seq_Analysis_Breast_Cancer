@@ -470,8 +470,19 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 - A y-axis display limit around 1 × 10⁵ may make the distributions of the majority of samples easier to visualize.
 - This 1 × 10⁵ value is being considered only as a visualization limit at this stage, not as a filtering cutoff.
 
-*The nCount_RNA violin plots showed very narrow distributions across most samples. The majority of samples extended to approximately 2 × 10⁵ counts or below, whereas one sample showed an extended range reaching approximately 8 × 10⁵. This upper extension was predominantly a thin line rather than a broad distribution. The large range of this sample compressed the distributions of the remaining samples near the lower end of the y-axis. The two T47D samples showed small lower extensions compared with the other samples. For clearer visualization of the majority of samples, an upper display limit of approximately 1 × 10⁵ could be considered.*  
+*The nCount_RNA violin plots showed very narrow distributions across most samples. The majority of samples extended to approximately 2 × 10⁵ counts or below, whereas one sample showed an extended range reaching approximately 8 × 10⁵. This upper extension was predominantly a thin line rather than a broad distribution. The large range of this sample compressed the distributions of the remaining samples near the lower end of the y-axis. The two T47D samples showed small lower extensions compared with the other samples. For clearer visualization of the majority of samples, an upper display limit of approximately 1 × 10⁵ could be considered.*        
+
 `percent.mt` -- Observations (Violin Plot):
+- The violins are tiny near the bottom of the y-axis.
+- The widest range/distribution is approximately between 3–5%.
+- Above approximately 10%, the violins mostly form thin upper lines/tails.
+- There are no distinct lower tails in any of the samples.
+- Most violins form a conical narrowing toward 0%.
+- The overall trend/shape is similar across all samples.
+- The control and treated samples within the same sample group look approximately 90% similar.
+
+*The majority of cells showed mitochondrial RNA proportions concentrated around 3–5%, with only a small number of cells extending above ~10%. The absence of a broad high-mitochondrial population suggests that elevated mitochondrial content is not a widespread feature across the dataset. However, cells in the upper tail should be evaluated together with nFeature_RNA and nCount_RNA before determining an appropriate filtering threshold.*
+
 
 
 
