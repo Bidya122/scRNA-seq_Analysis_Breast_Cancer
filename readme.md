@@ -444,7 +444,7 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 
 **Interpretation of the preQC for filtering**     
 
-`nFeature_RNA` — Observations:     
+`nFeature_RNA` — Observations (Violin Plot):     
 - Most samples do not have a distinct lower tail.    
 - The two T47D samples have longer lower tails, but these tails are thin.    
 - All samples start from y = 0, but the violins are not widest at 0.    
@@ -456,7 +456,7 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 
 *The major cell population across samples is concentrated around 2,500–4,000 detected genes. Lower nFeature_RNA values are present, extending toward 0, but the density decreases toward the lower end rather than remaining maximal there. The high-feature region above ~5,000 is predominantly represented by thin upper extensions/outliers. T47D samples show somewhat longer lower tails compared with the other samples.*
 
-`nCount_RNA` -- Observations:
+`nCount_RNA` -- Observations (Violin Plot):
 
 
 
