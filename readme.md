@@ -661,6 +661,40 @@ A further check examined whether the T47D cell-line samples were responsible for
 
 The final pre-filtering summary showed 131,784 cells in the combined dataset, of which 6,196 cells (4.7%) were identified as low-quality based on the combined criteria of low gene detection, low RNA counts and elevated mitochondrial content. This leaves 125,588 cells (95.3%) for downstream analysis. Removing only 4.7% of cells indicates that the filtering strategy is relatively conservative and specifically targets cells with concordant evidence of poor quality, while retaining the majority of the dataset and minimizing the risk of over-filtering biologically informative cells.
 
+## 10. Cell-level QC filtering
+```bash
+# Flag cells showing concordant evidence of low quality: low gene detection + low RNA counts + high mitochondrial content
+low_qc <- seurat_combined$nFeature_RNA < 1000 &
+          seurat_combined$nCount_RNA < 2000 &
+          seurat_combined$percent.mt >= 15
+
+seurat_filtered <- subset(seurat_combined, cells = colnames(seurat_combined)[!low_qc])
+
+
+dim(seurat_combined)
+dim(seurat_filtered)
+table(seurat_combined$orig.ident) 
+table(seurat_filtered$orig.ident)
+
+## Flag cells with extremely high ribosomal RNA content.
+high_rb <- seurat_combined$percent.rb >= 50 #percent.rb >= 50% represents the extreme upper tail of the ribosomal-content distribution in this dataset also verified visually. 
+cells_to_remove <- low_qc | high_rb ## Combine QC flags= A cell is removed if it satisfies either QC criterion.
+seurat_filtered <- subset( seurat_combined, cells = colnames(seurat_combined)[!cells_to_remove])
+
+qc_summary <- data.frame( Metric = c( "Cells before filtering", "Cells flagged by low-QC criteria", "Cells flagged by high percent.rb", "Total cells flagged for removal", "Cells retained", "Percentage removed", "Percentage retained"),
+  Value = c( ncol(seurat_combined), sum(low_qc), sum(high_rb),  sum(cells_to_remove), ncol(seurat_filtered), round(mean(cells_to_remove) * 100, 2), round((1 - mean(cells_to_remove)) * 100, 2)
+  )
+)
+qc_summary
+```
+<img width="655" height="247" alt="image" src="https://github.com/user-attachments/assets/10a7be12-ce4e-4198-b59c-627af65b4d6b" />
+
+Cell quality was assessed using four metrics: nFeature_RNA, nCount_RNA, percent.mt, and percent.rb. The distributions of these metrics were examined across all 26 samples, and filtering thresholds were selected based on the observed characteristics of the breast cancer dataset rather than directly adopting thresholds from another dataset as shown above in the previous chunk. 
+Cells were considered low quality when they showed concordant evidence of poor RNA capture and low transcriptomic complexity, defined as nFeature_RNA < 1000, nCount_RNA < 2000, and percent.mt ≥ 15%. These criteria were applied together because no single metric alone provided sufficient evidence of poor cell quality. Ribosomal content was evaluated separately because ribosomal transcripts are naturally abundant in cells. Instead of using a low threshold that would remove a substantial proportion of the dataset, cells with percent.rb ≥ 50% were identified as having extremely high ribosomal content, corresponding to the extreme upper tail of the observed distribution.    
+Cells meeting either the concordant low-QC criterion or the extreme ribosomal-content criterion were removed. Of the 131,784 cells initially evaluated, 6,300 unique cells (4.78%) were removed, leaving 125,484 cells (95.22%) for subsequent analysis. Cells with unusually high nCount_RNA or nFeature_RNA were not removed solely on the basis of these values, as high RNA content may represent genuine high-complexity cells or potential doublets. Potential doublets were therefore reserved for evaluation using a dedicated doublet-detection approach in the subsequent workflow.    
+
+
+
 
 
 
