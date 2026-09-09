@@ -498,6 +498,154 @@ The density plot showed a positive association between nCount_RNA and nFeature_R
 Biological context is an important consideration in QC because cells with unusual QC metrics may still represent biologically meaningful populations. Therefore, the aim was to balance removal of genuinely poor-quality cells with preservation of biologically informative cells, avoiding both over-filtering and under-filtering.    
 The QC plots provided an overall visual assessment of the data, but numerical summaries and joint metric analysis were required to quantify extreme populations and determine whether multiple QC abnormalities occurred within the same cells. Biological context was also considered because cells with unusual QC metrics may still represent biologically meaningful populations. Therefore, this assessment was performed before filtering to balance the removal of genuinely poor-quality cells with the preservation of biologically informative cells, avoiding both over-filtering and under-filtering.
 
+```bash
+##This chunk was done inorder to have a clear statistical and biological understanding of the data. Visualization of plots and the numbers definitely have different conclusions. I did not want to lose necessary data hence I performed this statistical chunk to reach to a logical conclusion which will be check visually again. 
+# ------------------------------------------------------------
+# 1. nFeature_RNA
+# ------------------------------------------------------------
+# Number of genes detected in each cell. Used as a measure of transcriptomic complexity.
+# Very low values may indicate empty droplets, poor capture or low-quality cells.
+# Very high values can indicate genuinely high-complexity cells or potential doublets/multiplets.
+summary(seurat_combined$nFeature_RNA) 
+quantile(seurat_combined$nFeature_RNA,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+
+# ------------------------------------------------------------
+# 2. nCount_RNA
+# ------------------------------------------------------------
+# Total number of detected RNA/UMI counts per cell.
+# Low values can indicate poor RNA capture or low-quality cells.
+# Extremely high values may represent high-RNA cells or potential doublets/multiplets.
+#
+# nCount_RNA is strongly right-skewed in this dataset, so both the central distribution and the extreme upper tail are examined.
+
+summary(seurat_combined$nCount_RNA)
+quantile(seurat_combined$nCount_RNA,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+
+# ------------------------------------------------------------
+# 3. percent.mt
+# ------------------------------------------------------------
+# Percentage of RNA counts derived from mitochondrial genes.
+# Elevated mitochondrial RNA can indicate cellular stress, damage, or compromised cell integrity.
+summary(seurat_combined$percent.mt)
+quantile(seurat_combined$percent.mt,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+
+# ------------------------------------------------------------
+# 4. percent.rb
+# ------------------------------------------------------------
+# Percentage of RNA counts derived from ribosomal genes.
+# Ribosomal transcripts are naturally abundant in cells.
+# Therefore, a high ribosomal fraction does not by itselfindicate poor cell quality.
+
+summary(seurat_combined$percent.rb)
+quantile(seurat_combined$percent.rb,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+#Investigate the potentially extreme populations
+sum(seurat_combined$nFeature_RNA >= 7000)
+sum(seurat_combined$percent.mt >= 15)
+sum(seurat_combined$nCount_RNA > 100000)
+sum(seurat_combined$nCount_RNA > 200000)
+sum(seurat_combined$percent.rb >= 40)
+
+# ============================================================
+# JOINT QC METRIC ANALYSIS
+# ============================================================
+# Individual QC metrics are not sufficient to classify a cell as poor quality. Therefore, combinations of metrics are examined to identify cells showing concordant evidence of poor quality or unusual complexity.
+
+# High-feature + high-count cells
+sum(
+  seurat_combined$nFeature_RNA >= 7000 &
+  seurat_combined$nCount_RNA >= 100000
+)
+# High-feature + high-mitochondrial cells
+sum(
+  seurat_combined$nFeature_RNA >= 7000 &
+  seurat_combined$percent.mt >= 15
+)
+# Low-feature + low-count + high-mitochondrial cells
+sum(
+  seurat_combined$nFeature_RNA < 1000 &
+  seurat_combined$nCount_RNA < 2000 &
+  seurat_combined$percent.mt >= 15
+)
+
+# ============================================================
+# SAMPLE-WISE ASSESSMENT OF LOW-QUALITY CELLS
+# ============================================================
+table(seurat_combined$GSM[    #thresholds such as 1000, 2000 and 15% are dataset-informed working boundaries, not universal biological cutoffs.
+  seurat_combined$nFeature_RNA < 1000 &
+  seurat_combined$nCount_RNA < 2000 &
+  seurat_combined$percent.mt >= 15
+])
+
+low_qc <- seurat_combined$nFeature_RNA < 1000 &
+          seurat_combined$nCount_RNA < 2000 &
+          seurat_combined$percent.mt >= 15
+
+sum(low_qc)  #6196cells
+
+qc_by_sample <- data.frame(Sample = seurat_combined$GSM, Low_QC = low_qc) # Calculate the proportion of low-quality cells in each sample
+head(qc_by_sample) 
+qc_summary <- aggregate(Low_QC ~ Sample, data = qc_by_sample, FUN = sum) # Number of low-QC cells per sample
+total_summary <- aggregate(Low_QC ~ Sample, data = qc_by_sample, FUN = length) # Total number of cells per sample
+qc_summary$Total_Cells <- total_summary$Low_QC # Add total cell numbers
+qc_summary$Percent_Low_QC <- (qc_summary$Low_QC / qc_summary$Total_Cells) * 100  # Calculate percentage of low-QC cells in each sample
+qc_summary
+
+library(writexl) # Save the sample-wise QC summary
+write_xlsx(
+  qc_summary,
+  path = file.path(outputDir, "GSE245601_low_QC_summary.xlsx")
+)
+# ============================================================
+# INVESTIGATION OF HIGH-COMPLEXITY CELLS
+# ============================================================
+# Very high nCount_RNA and nFeature_RNA values can represent genuinely high-complexity cells or potential doublets/multiplets. These cells are therefore investigated rather than removed automatically.
+
+#Define the high-complexity population. TRUE  → cell has BOTH nCount_RNA ≥ 100,000 AND nFeature_RNA ≥ 7,000, FALSE → cell does not meet both conditions
+high_qc <- seurat_combined$nCount_RNA >= 100000 &
+           seurat_combined$nFeature_RNA >= 7000 ##1226 cells in total
+
+table(seurat_combined$GSM[high_qc]) ##per sample how are the 1226 cells distributed 
+summary(seurat_combined$percent.mt[high_qc]) #we calculated the summary of percent.mt of these 1226 cells and saw that their mediam were low so not all of them are bad!! 
+
+quantile(  ##It means that the typical high-complexity cell has low mitochondrial contribution.That makes these cells much less suspicious as a general population.
+  seurat_combined$percent.mt[high_qc],
+  probs = c(0, 0.25, 0.5, 0.75, 0.95, 0.99, 1)
+)
+sum( high_qc & seurat_combined$percent.mt >= 15)  #How many high-complexity cells also have high mt% = 89cells
+table(seurat_combined$GSM[ high_qc & seurat_combined$percent.mt >= 15])  #Which samples contain those 89 cells = "GSM7845550", "GSM7845551" both are cell line data
+
+sum(
+  seurat_combined$GSM %in% c("GSM7845550", "GSM7845551") & #Check whether T47D (cell line) is responsible for our LOW-QC population 
+  seurat_combined$nFeature_RNA < 1000 &
+  seurat_combined$nCount_RNA < 2000 &
+  seurat_combined$percent.mt >= 15
+) #14cells
+
+#------------------------------------------------
+#Create final QC summary
+#------------------------------------------------
+qc_before_after <- data.frame(
+  Metric = c( "Cells before filtering", "Cells flagged for removal",  "Cells retained", "Percentage removed"),
+  Value = c( ncol(seurat_combined), sum(low_qc), sum(!low_qc), round(mean(low_qc) * 100, 2)
+  )
+)
+
+qc_before_after
+```
+<img width="1057" height="703" alt="image" src="https://github.com/user-attachments/assets/722dad03-b0dd-4cff-be6d-87bfa866b65e" />
+
+The numerical QC assessment showed that the median cell had 1,710 detected genes (nFeature_RNA) and 4,502 RNA counts (nCount_RNA), while the upper quartiles were 3,342 genes and 13,132 counts, respectively. The lower tails were gradual rather than showing a sharp drop, with the 5th percentiles at 389 genes and 703 counts, indicating that there was no obvious natural cutoff around commonly used thresholds such as 1,000 genes or 2,000 counts. At the upper end, 5,067 cells had ≥7,000 detected genes and 1,226 cells had >100,000 counts, indicating that these were not necessarily rare enough to be removed automatically and therefore required further investigation.     
+For mitochondrial content, the median was 2.93% and the 75th percentile was 5.03%, indicating that most cells had relatively low mitochondrial contribution; however, the 95th and 99th percentiles increased to 17.25% and 40.84%, respectively, showing a substantial high-mitochondrial tail. A total of 8,068 cells had ≥15% mitochondrial reads, making a simple 15% cutoff potentially too stringent for this dataset and requiring evaluation together with other QC metrics.     
+For ribosomal content, the median was 17.85% and the 75th percentile was 24.08%, with 2,846 cells having ≥40%. Since ribosomal transcripts are naturally abundant, this metric was used mainly to characterize the dataset rather than as an independent exclusion criterion. Overall, these numerical results showed that none of the individual thresholds could be safely applied in isolation, supporting the subsequent use of combined QC metrics to identify genuinely low-quality cells.    
+
+<img width="640" height="345" alt="image" src="https://github.com/user-attachments/assets/2f94efca-e262-41f4-b8ff-e8bea5c3a713" />
+
+The joint QC analysis showed that 1,226 cells had both high gene detection (≥7,000 nFeature_RNA) and high RNA counts (≥100,000 nCount_RNA), identifying a high-complexity population that required investigation rather than automatic removal. Only 179 cells had both high gene detection (≥7,000) and elevated mitochondrial content (≥15%), indicating that high mitochondrial content was not generally associated with the high-complexity population. In contrast, 6,196 cells simultaneously showed low gene detection (<1,000), low RNA counts (<2,000), and high mitochondrial content (≥15%). This combination provides concordant evidence of low transcriptomic complexity, low RNA capture, and cellular stress/compromised quality, making these 6,196 cells a much stronger candidate population for removal than cells identified by any single QC metric alone.      
+
 
 
 
