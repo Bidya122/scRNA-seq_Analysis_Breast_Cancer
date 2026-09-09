@@ -646,6 +646,24 @@ For ribosomal content, the median was 17.85% and the 75th percentile was 24.08%,
 
 The joint QC analysis showed that 1,226 cells had both high gene detection (≥7,000 nFeature_RNA) and high RNA counts (≥100,000 nCount_RNA), identifying a high-complexity population that required investigation rather than automatic removal. Only 179 cells had both high gene detection (≥7,000) and elevated mitochondrial content (≥15%), indicating that high mitochondrial content was not generally associated with the high-complexity population. In contrast, 6,196 cells simultaneously showed low gene detection (<1,000), low RNA counts (<2,000), and high mitochondrial content (≥15%). This combination provides concordant evidence of low transcriptomic complexity, low RNA capture, and cellular stress/compromised quality, making these 6,196 cells a much stronger candidate population for removal than cells identified by any single QC metric alone.      
 
+<img width="1415" height="472" alt="image" src="https://github.com/user-attachments/assets/570de0b5-4026-4536-885b-df4df0bd7d80" />
+
+<img width="487" height="680" alt="image" src="https://github.com/user-attachments/assets/83eb858d-48ae-4017-86cf-d37c41ef9355" />
+
+The 6,196 cells identified by the combined low-QC criteria were assessed sample-wise to determine whether the flagged population was driven by a single problematic sample. The table() output shows that low-QC cells were present across all 26 samples, with the largest numbers occurring in GSM7845555 (655), GSM7845563 (587), GSM7845569 (516), GSM7845547 (489), and GSM7845570 (490). This indicates that the low-QC population is distributed across the dataset rather than being restricted to one sample. The subsequent sample-wise summary calculates both the number and percentage of flagged cells in each sample, allowing the extent of low-quality cells to be evaluated relative to each sample's total cell number. This supports cell-level filtering rather than removing an entire sample solely because it contains a higher proportion of low-QC cells. In the excel file I found that the percentage ranged from 0.1% to 14%. Therefore, the QC abnormalities were not sufficient to justify excluding any entire sample, and filtering was applied at the individual-cell level to remove cells with concordant evidence of poor quality while retaining the remaining cells.    
+
+<img width="1573" height="726" alt="image" src="https://github.com/user-attachments/assets/ff2aa9c3-bffe-4559-9f9c-a6d0819d2053" />
+
+The high-complexity population was defined as cells with both nCount_RNA ≥100,000 and nFeature_RNA ≥7,000, resulting in 1,226 cells. These cells were distributed across multiple samples, with the largest contribution from GSM7845550 (286 cells), followed by GSM7845552 (130) and GSM7845546 (115), indicating that the population was not restricted to a single sample. Importantly, the mitochondrial content of these 1,226 cells was generally low, with a median of only 2.26% and 75% of cells below 8.34%, suggesting that most high-complexity cells did not show evidence of cellular stress based on mitochondrial content. Only 89 of the 1,226 high-complexity cells had percent.mt ≥15%, demonstrating that high RNA counts and high gene detection were generally not accompanied by elevated mitochondrial content. These 89 cells were almost entirely restricted to GSM7845550 (87 cells) and GSM7845551 (2 cells), which correspond to the T47D cell-line samples. Therefore, the high-complexity population was retained rather than removed automatically, as the available QC metrics did not provide sufficient evidence that these cells were predominantly low-quality or doublets.    
+A further check examined whether the T47D cell-line samples were responsible for the low-QC population identified using the combined criteria of low gene detection, low RNA counts and high mitochondrial content. Only 14 cells from these two T47D samples met all three low-QC criteria, indicating that the T47D samples contributed very little to the 6,196-cell low-QC population and therefore did not explain the overall low-QC signal.    
+
+<img width="1096" height="437" alt="image" src="https://github.com/user-attachments/assets/7bdeef65-cd27-49ce-b284-dfe594286008" />
+
+The final pre-filtering summary showed 131,784 cells in the combined dataset, of which 6,196 cells (4.7%) were identified as low-quality based on the combined criteria of low gene detection, low RNA counts and elevated mitochondrial content. This leaves 125,588 cells (95.3%) for downstream analysis. Removing only 4.7% of cells indicates that the filtering strategy is relatively conservative and specifically targets cells with concordant evidence of poor quality, while retaining the majority of the dataset and minimizing the risk of over-filtering biologically informative cells.
+
+
+
+
 
 
 
