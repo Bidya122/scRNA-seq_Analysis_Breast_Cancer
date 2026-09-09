@@ -494,7 +494,10 @@ density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_pr
 
 The density plot showed a positive association between nCount_RNA and nFeature_RNA, with the majority of cells forming a dense diagonal population. This indicates that cells with higher total RNA counts generally had a greater number of detected genes. Cells at the low-count/low-feature end and extreme high-count/high-feature regions were identified as populations requiring further evaluation using the other QC metrics rather than being excluded based on this plot alone.    
 
-Final Interpretation of PreQC Visualization and Analytics:     
+## 9. sanity check for preQC before the Application of stringent filters
+Biological context is an important consideration in QC because cells with unusual QC metrics may still represent biologically meaningful populations. Therefore, the aim was to balance removal of genuinely poor-quality cells with preservation of biologically informative cells, avoiding both over-filtering and under-filtering.    
+The QC plots provided an overall visual assessment of the data, but numerical summaries and joint metric analysis were required to quantify extreme populations and determine whether multiple QC abnormalities occurred within the same cells. Biological context was also considered because cells with unusual QC metrics may still represent biologically meaningful populations. Therefore, this assessment was performed before filtering to balance the removal of genuinely poor-quality cells with the preservation of biologically informative cells, avoiding both over-filtering and under-filtering.
+
 
 
 
