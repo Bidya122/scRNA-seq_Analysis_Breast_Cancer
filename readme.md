@@ -789,6 +789,122 @@ retention_summary #106334 cells = 80.69%
 
 <img width="977" height="122" alt="image" src="https://github.com/user-attachments/assets/99616f01-635d-4cda-81c0-78cbf5b9de1a" />
 
+## 11. Post QC Visualization
+
+```bash
+# Scatter plot of nCount vs nFeature with marginal histograms
+
+study_id <- "GSE245601" # Define study ID
+density_scatter_plot <- function(seurat_obj, filename) {
+  
+  ## Create a data frame containing QC metrics for each cell
+  df <- data.frame(
+    log1p_nCount_RNA = log1p(seurat_obj$nCount_RNA),       # Total RNA molecules per cell
+    log1p_nFeature_RNA = log1p(seurat_obj$nFeature_RNA), # Number of detected genes per cell
+    GSM = seurat_obj$GSM
+  )
+  
+  ## Generate scatter plot
+  p <- ggplot( df, aes(x = log1p_nCount_RNA, y = log1p_nFeature_RNA, color = GSM)) +
+    geom_point(alpha = 0.3, size = 1.0) +
+    theme_minimal() +
+    theme(
+      plot.margin = margin(10, 20, 20, 30),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10) ,
+      legend.position.inside = c(0.05, 0.95),
+      legend.justification = c("left", "top"),
+      legend.key.size = unit(0.5, "cm")) +
+    guides(  color = guide_legend(
+        override.aes = list(size = 5) ) ) +
+    labs( x = "log1p(nCount_RNA)",  y = "log1p(nFeature_RNA)", colour = "Sample") +
+    guides(colour = guide_legend(ncol = 1))
+  
+  ## Add marginal histograms
+  p <- ggMarginal( p, type = "histogram", fill = "skyblue", bins = 40)
+  
+  ## Save plot
+  ggsave( filename, plot = p,  width = 8, height = 10,  dpi = 600, bg = "white" )
+}
+
+density_scatter_plot( seurat_cleanQC, file.path( plotDir, paste0(study_id, "_postQC_density-scatter.png")))
+```
+<img width="742" height="927" alt="image" src="https://github.com/user-attachments/assets/fc07ff0c-1158-4f99-b7e7-4ab8417335ba" />
+
+A density scatter plot of nCount_RNA against nFeature_RNA was generated to examine the relationship between sequencing depth and the number of genes detected per cell. This plot provides a complementary view to the individual QC metric distributions and helps identify cells occupying unusual regions of the expression landscape. Most cells formed a dense main population, showing the expected positive relationship between total RNA counts and the number of detected genes: cells with more RNA counts generally had more detected genes. A smaller population extended into the high-count and high-feature region, representing cells with unusually large transcriptomic profiles. These cells were considered as part of the overall QC assessment because extreme values can arise from high-RNA cells as well as potential multiplets or doublets. The post-QC density pattern remained broadly similar to the pre-QC distribution, indicating that the main population of cells was retained and that QC filtering did not substantially alter the overall structure of the dataset. The plot was therefore used as a supporting visualization rather than as a standalone filtering criterion. Final QC decisions were based on the combined assessment of nFeature_RNA, nCount_RNA, percent.mt, and percent.rb, followed by sample-wise doublet detection using scDblFinder.    
+
+```bash
+study_id <- "GSE245601" # Define study ID
+head(seurat_cleanQC@meta.data)
+
+# Function to generate and save QC violin plots for each sample
+save_violin_plots_separate <- function(
+  seurat_obj,  
+  plotDir,
+  study_id,
+  features = c( "nCount_RNA", "nFeature_RNA",  "percent.mt", "percent.rb" )
+) {
+ 
+  # Create plot directory if it does not already exist
+  if (!dir.exists(plotDir)) {
+    dir.create(plotDir, recursive = TRUE)
+  }
+  
+# Extract cell-level metadata
+  meta <- seurat_obj@meta.data
+
+# Convert sample identity to factor for plotting
+  meta$sample <- as.factor(meta$GSM)
+ cutoffs <- c(nCount_RNA=100000, nFeature_RNA=7000, percent.mt=12, percent.rb=50)
+ 
+# Generate one plot for each QC metric
+  for (feat in features) {
+
+# Check whether the QC metric exists
+    if (!feat %in% colnames(meta)) {
+      warning(paste("Skipping", feat, "- not found in metadata"))
+      next
+    }
+
+    # Violin plot with boxplot overlay
+    p <- ggplot( meta, aes(x = sample, y = .data[[feat]])) + 
+      geom_violin( trim = TRUE, fill = "Red", alpha = 0.7) +
+      geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.6) +
+       geom_hline(yintercept=cutoffs[feat], linetype="dashed") +
+      labs( title = feat, x = "Sample",  y = feat ) + theme_bw(base_size = 14) +  theme(
+        axis.text.x = element_text(angle = 45,  hjust = 1),
+        plot.title = element_text(hjust = 0.5)
+      )
+
+    # Save plot
+    ggsave(filename = file.path(plotDir, paste0(study_id, "_postQC_", feat, "_violin.png")),
+      plot = p, width = 30, height = 10, dpi = 600, bg = "white" )
+  }
+}
+
+save_violin_plots_separate( seurat_cleanQC, plotDir, study_id)    #Run the above function
+
+saveRDS( seurat_cleanQC, file = file.path(outputDir, "GSE245601_seurat_cleanQC.rds"))
+file.exists(file.path(outputDir, "GSE245601_seurat_cleanQC.rds")) #TRUE
+ncol(seurat_cleanQC) #106334
+```
+<img width="1816" height="617" alt="image" src="https://github.com/user-attachments/assets/81e0e80e-dce4-42af-b4eb-98f2ac932f21" />
+
+<img width="1823" height="627" alt="image" src="https://github.com/user-attachments/assets/d8e79392-c1ab-4ce2-a3ef-c1a5f2caf6ca" />
+
+<img width="1836" height="632" alt="image" src="https://github.com/user-attachments/assets/0728ce7f-835e-45ff-8497-11efcf7592ac" />
+
+<img width="1828" height="633" alt="image" src="https://github.com/user-attachments/assets/29716df1-8c97-4a65-86ae-3c7fe1a42157" />
+
+After QC filtering and doublet removal, violin plots were generated separately for each sample using the four QC metrics: nCount_RNA, nFeature_RNA, percent.mt, and percent.rb. The plots were grouped by GSM/sample to assess whether the QC filtering produced consistent distributions across samples. Overall, the post-QC violin plots showed that the majority of cells were concentrated around the central distribution, with the boxplots providing a clear view of the median and interquartile range. A small number of upper outliers were still visible, but the extreme populations observed before QC were substantially reduced.      
+The main exception was nCount_RNA, which continued to show a relatively long upper tail across several samples. These cells were retained because they remained within the predefined nCount_RNA < 100,000 threshold and were not removed solely based on their position in the upper tail. Since high RNA counts can also occur in biologically high-RNA cells, an additional arbitrary cutoff was not applied at this stage. The nCount_RNA distribution will therefore be monitored during subsequent analysis. If a specific downstream phase or selected sample subset reveals a clear technical concern associated with these high-count cells, their effect can be evaluated and addressed at that stage rather than removing them prematurely.    
+Overall, the post-QC visualizations indicated that the major cell population was retained while the most extreme QC populations had been removed.      
+
+
+
+
+
+
 
 
 
