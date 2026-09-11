@@ -661,39 +661,133 @@ A further check examined whether the T47D cell-line samples were responsible for
 
 The final pre-filtering summary showed 131,784 cells in the combined dataset, of which 6,196 cells (4.7%) were identified as low-quality based on the combined criteria of low gene detection, low RNA counts and elevated mitochondrial content. This leaves 125,588 cells (95.3%) for downstream analysis. Removing only 4.7% of cells indicates that the filtering strategy is relatively conservative and specifically targets cells with concordant evidence of poor quality, while retaining the majority of the dataset and minimizing the risk of over-filtering biologically informative cells.
 
-## 10. Cell-level QC filtering
+## 10. Cell-level QC filtering - Four Metrics and Doublets
+
 ```bash
-# Flag cells showing concordant evidence of low quality: low gene detection + low RNA counts + high mitochondrial content
-low_qc <- seurat_combined$nFeature_RNA < 1000 &
-          seurat_combined$nCount_RNA < 2000 &
-          seurat_combined$percent.mt >= 15
+seurat_filtered <- subset( seurat_combined,
+   subset =
+    nCount_RNA < 100000 &
+    nFeature_RNA < 7000 &
+    percent.mt < 12 &
+    percent.rb < 50
+)
 
-seurat_filtered <- subset(seurat_combined, cells = colnames(seurat_combined)[!low_qc])
+# Check dimensions
+dim(seurat_filtered)   # 26506genes  116174cells
+
+# Number of cells retained
+ncol(seurat_filtered)   #116174
+
+# Number of cells removed
+ncol(seurat_combined) - ncol(seurat_filtered) # 15610
+
+# Percentage retained
+ncol(seurat_filtered) / ncol(seurat_combined) * 100  #88.15
 
 
-dim(seurat_combined)
-dim(seurat_filtered)
-table(seurat_combined$orig.ident) 
-table(seurat_filtered$orig.ident)
+##for doublets
 
-## Flag cells with extremely high ribosomal RNA content.
-high_rb <- seurat_combined$percent.rb >= 50 #percent.rb >= 50% represents the extreme upper tail of the ribosomal-content distribution in this dataset also verified visually. 
-cells_to_remove <- low_qc | high_rb ## Combine QC flags= A cell is removed if it satisfies either QC criterion.
-seurat_filtered <- subset( seurat_combined, cells = colnames(seurat_combined)[!cells_to_remove])
 
-qc_summary <- data.frame( Metric = c( "Cells before filtering", "Cells flagged by low-QC criteria", "Cells flagged by high percent.rb", "Total cells flagged for removal", "Cells retained", "Percentage removed", "Percentage retained"),
-  Value = c( ncol(seurat_combined), sum(low_qc), sum(high_rb),  sum(cells_to_remove), ncol(seurat_filtered), round(mean(cells_to_remove) * 100, 2), round((1 - mean(cells_to_remove)) * 100, 2)
+## Identify samples
+sample_ids <- unique(seurat_filtered$orig.ident)
+
+## Store doublet results for each sample
+doublet_results <- list()
+
+## Run scDblFinder sample-wise
+for (sample in sample_ids) {
+  
+  cat("\nProcessing:", sample, "\n")
+  
+  sample_obj <- subset( seurat_filtered, subset = orig.ident == sample)
+  
+  sce <- as.SingleCellExperiment(sample_obj)
+  sce <- scDblFinder(sce)
+  
+  doublet_results[[sample]] <- data.frame(
+    cell = colnames(sce),
+    scDblFinder.class = sce$scDblFinder.class,
+    scDblFinder.score = sce$scDblFinder.score )
+  
+  cat( "Doublets:", sum(sce$scDblFinder.class == "doublet"), "of",   ncol(sce), "\n")
+  
+  rm(sample_obj, sce)
+  gc()
+}
+
+doublet_summary <- do.call( rbind,
+  lapply(  names(doublet_results),
+    function(x) { data.frame( Sample = x,
+        Total_Cells = nrow(doublet_results[[x]]),
+        Doublets = sum( doublet_results[[x]]$scDblFinder.class == "doublet"  ),
+        Doublet_Percent = mean( doublet_results[[x]]$scDblFinder.class == "doublet"  ) * 100)}
   )
 )
-qc_summary
+
+doublet_summary
+
+doublet_cells <- unlist(
+  lapply( doublet_results,
+    function(x) { x$cell[x$scDblFinder.class == "doublet"] }
+  )
+)
+
+seurat_cleanQC <- subset( seurat_filtered,
+  cells = setdiff( colnames(seurat_filtered), doublet_cells ))  #106334
 ```
-<img width="655" height="247" alt="image" src="https://github.com/user-attachments/assets/10a7be12-ce4e-4198-b59c-627af65b4d6b" />
 
-Cell quality was assessed using four metrics: nFeature_RNA, nCount_RNA, percent.mt, and percent.rb. The distributions of these metrics were examined across all 26 samples, and filtering thresholds were selected based on the observed characteristics of the breast cancer dataset rather than directly adopting thresholds from another dataset as shown above in the previous chunk. 
-Cells were considered low quality when they showed concordant evidence of poor RNA capture and low transcriptomic complexity, defined as nFeature_RNA < 1000, nCount_RNA < 2000, and percent.mt ≥ 15%. These criteria were applied together because no single metric alone provided sufficient evidence of poor cell quality. Ribosomal content was evaluated separately because ribosomal transcripts are naturally abundant in cells. Instead of using a low threshold that would remove a substantial proportion of the dataset, cells with percent.rb ≥ 50% were identified as having extremely high ribosomal content, corresponding to the extreme upper tail of the observed distribution.    
-Cells meeting either the concordant low-QC criterion or the extreme ribosomal-content criterion were removed. Of the 131,784 cells initially evaluated, 6,300 unique cells (4.78%) were removed, leaving 125,484 cells (95.22%) for subsequent analysis. Cells with unusually high nCount_RNA or nFeature_RNA were not removed solely on the basis of these values, as high RNA content may represent genuine high-complexity cells or potential doublets. Potential doublets were therefore reserved for evaluation using a dedicated doublet-detection approach in the subsequent workflow.    
+So as shown above, the preQC distribution of the data was:      
 
+| Metric | Median | 95th Percentile | 99th Percentile | Maximum |
+|---|---:|---:|---:|---:|
+| nFeature_RNA | 1,710 | 6,584 | 8,482 | 12,738 |
+| nCount_RNA | 4,502 | 47,975 | 97,750 | 784,177 |
+| percent.mt | 2.93% | 17.25% | 40.84% | 96.51% |
+| percent.rb | 17.85% | 35.63% | 43.02% | 71.86% |
 
+The distributions showed clear upper tails for all four metrics, particularly nCount_RNA and percent.mt. Based on the distributions and QC visualization the thresholds were set.          
+`nFeature_RNA < 7000` removed cells with unusually high numbers of detected genes while retaining the main distribution.       
+`nCount_RNA < 100000` removed the extreme high-count tail. This cutoff was close to the pre-QC 99th percentile (~97,750), making it a selective upper-tail filter rather than a broad removal of high-RNA cells.       
+`percent.mt < 12` removed cells with relatively high mitochondrial content while retaining the majority of cells in the main distribution.        
+`percent.rb < 50` removed cells with exceptionally high ribosomal contribution. Since ribosomal transcripts are naturally abundant, this was used as an upper-tail filter rather than interpreting moderate ribosomal percentages as poor quality.         
+
+So Intially the merged dataset initially contained 131,784 cells and after applying the four QC thresholds, Cells before QC: 131,784; Cells after QC: 116,174; Cells removed: 15,610; Cells retained: 88.15%. 
+
+After QC filtering, potential doublets were identified using scDblFinder. A doublet occurs when two cells are captured together and assigned to a single barcode. Such cells can contain a mixed transcriptional profile and may create artificial cell populations during downstream clustering and cell-type annotation. Because the dataset contained 26 independent samples, doublet detection was performed sample-wise using the orig.ident metadata field. Each sample was converted to a SingleCellExperiment object and processed using scDblFinder with its default parameters. After Doublet detection the results were: 
+Cells after QC: 116,174    
+Doublets removed: 9,840    
+Final cells: 106,334    
+Retention from original dataset: 80.69%    
+Retention after QC: ~91.53%    
+
+As a final QC sanity check, stringent low-quality criteria were applied simultaneously using nFeature_RNA < 1000, nCount_RNA < 2000, and percent.mt >= 15. No cells (0) met all three criteria simultaneously, indicating that the final dataset did not contain cells showing this combination of strong low-quality characteristics, suggesting that no cells in the final dataset exhibited this combination of low gene detection, low RNA counts, and high mitochondrial content.
+
+```bash
+low_qc <- seurat_cleanQC$nFeature_RNA < 1000 &
+          seurat_cleanQC$nCount_RNA < 2000 &
+          seurat_cleanQC$percent.mt >= 15
+
+sum(low_qc) #0 = not a single cell simultaneously meets all three stringent low-QC conditions
+
+# Cell retention summary
+
+initial_cells <- ncol(seurat_combined)
+
+after_qc_cells <- ncol(seurat_filtered)
+
+after_doublet_cells <- ncol(seurat_cleanQC)
+
+retention_summary <- data.frame(
+  Stage = c( "Initial", "After QC filtering", "After doublet removal" ),
+  Cells = c( initial_cells, after_qc_cells, after_doublet_cells ),
+  Retained_percent = round(
+    c(  initial_cells, after_qc_cells, after_doublet_cells ) / initial_cells * 100, 2 )
+)
+
+retention_summary #106334 cells = 80.69%
+```
+
+<img width="977" height="122" alt="image" src="https://github.com/user-attachments/assets/99616f01-635d-4cda-81c0-78cbf5b9de1a" />
 
 
 
