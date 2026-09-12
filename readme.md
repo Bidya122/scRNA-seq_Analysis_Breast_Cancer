@@ -904,6 +904,49 @@ Overall, the post-QC visualizations indicated that the major cell population was
 
 Following cell-level quality control, genes were annotated using the GENCODE human GRCh38 annotation. Gene biotypes were used to distinguish protein-coding genes from other genomic features such as lncRNAs, pseudogenes, and other non-protein-coding transcripts. To fetch the list I used GENCODE. For this analysis, GENCODE v37 was used to identify genes annotated as protein_coding before downstream normalization and analysis. [Gencode Release 37](https://www.gencodegenes.org/human/release_37.html). 
 
+```bash
+
+seurat_cleanQC <- readRDS("D:/Bidya Work/single/GSE245601_Breast_Cancer/Output/GSE245601_seurat_cleanQC.rds")  #Load the seurat_cleanQC file
+gtf_path <- file.path(
+  "D:/Bidya Work/single/GSE245601_Breast_Cancer",
+  "gencode.v37.annotation.gtf.gz"
+)
+file.exists(gtf_path)
+gtf <- import(gtf_path)
+colnames(gtf) #NULL = gtf is a GRanges object, so its annotation fields are stored as metadata columns, which we can access with mcols(gtf).
+head(gtf)
+table(gtf$type)
+table(gtf$gene_type)[1:20]
+#protein_coding = 2729272  That's the number of GTF annotation rows whose gene_type is protein-coding—because the GTF contains gene, transcript, exon, CDS, UTR, etc. records.
+protein_coding_genes_gtf <- gtf[ gtf$type == "gene" & gtf$gene_type == "protein_coding"]
+length(protein_coding_genes_gtf) #19951
+head(data.frame(
+    gene_id = protein_coding_genes_gtf$gene_id,
+    gene_name = protein_coding_genes_gtf$gene_name,
+    gene_type = protein_coding_genes_gtf$gene_type))
+
+protein_coding_gene_names <- protein_coding_genes_gtf$gene_name
+sum(rownames(seurat_cleanQC) %in% protein_coding_gene_names) #17706 #we'd be retaining about 66.8% of the current features.
+dim(seurat_cleanQC)
+
+non_protein_coding <- setdiff(rownames(seurat_cleanQC),  protein_coding_gene_names) #So we are checking about the rest of it
+length(non_protein_coding) #8800
+head(non_protein_coding, 50)
+grep("^MT-", non_protein_coding, value = TRUE)[1:20]
+
+
+#Checking the 8800 non coding features properly so we don't lose important ones
+# Sanity check: verify how representative excluded genes are classified in GENCODE v37.
+# This confirms that genes such as FAM87B and LINC00115 are annotated as non-coding and were therefore correctly excluded from the protein-coding gene set.
+gtf[ gtf$type == "gene" & gtf$gene_name == "FAM87B", c("gene_id", "gene_name", "gene_type")]
+gtf[ gtf$type == "gene" & gtf$gene_name %in% c("LINC00115", "LINC01342", "FAM87B"), c("gene_id", "gene_name", "gene_type")] ## Check multiple excluded genes to confirm consistent GENCODE annotation.
+
+seurat_protein_coding <- subset( seurat_cleanQC, features = protein_coding_gene_names)
+dim(seurat_protein_coding) #  17706 genes 106334 cells = Verification that all have protein coding genes
+all(rownames(seurat_protein_coding) %in% protein_coding_gene_names) #Verify that all remaining features are protein-coding
+saveRDS( seurat_protein_coding, file.path(outputDir, "GSE245601_seurat_protein_coding.rds"))
+```
+
 
 
 
