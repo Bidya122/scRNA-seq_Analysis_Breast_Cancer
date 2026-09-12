@@ -1,0 +1,703 @@
+---
+title: "scRNA_BreastCancer"
+author: "Bidya_Mohanty"
+date: "2026-08-20"
+output: html_document
+---
+
+```{r Dir}
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
+outputDir<- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Output"
+plotDir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Plots"
+
+# Create directories if they don't already exist
+dir.create(base_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(outputDir, recursive = TRUE, showWarnings = FALSE)
+dir.create(plotDir, recursive = TRUE, showWarnings = FALSE)
+```
+
+
+
+```{r Preliminary Data Download}
+library(GEOquery)
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
+dir.create(base_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Retrieve the GEO Series record for GSE245601
+# GSEMatrix = FALSE retrieves the GEO record and its associated GSM entries without loading the expression matrix
+gse <- getGEO("GSE245601", GSEMatrix = FALSE)   
+gsm_ids <- names(gse@gsms)  # Extract all GSM accession IDs associated with the GSE
+gsm_ids 
+
+##To create a metadata table for the GSM ids and their description
+gsm_info <- do.call( rbind,   
+  lapply(gse@gsms, function(x) {
+    data.frame(
+      GSM = x@header$geo_accession,
+      Title = x@header$title,
+      stringsAsFactors = FALSE)
+  })
+)
+gsm_info
+write.csv( gsm_info, "D:/Bidya Work/single/GSE245601_Breast_Cancer/GSE245601_GSM_metadata.csv", row.names = FALSE) 
+
+# Download supplementary files for all GSM samples
+# tryCatch() allows the loop to continue even if an individual download fails
+
+for (gsm in gsm_ids) {   
+  message("\n==============================")
+  message("Downloading: ", gsm)
+  message("==============================")
+  tryCatch({
+    getGEOSuppFiles(
+      gsm,
+      baseDir = base_dir
+    )
+    message("✓ Completed: ", gsm)
+    }, error = function(e) {
+    message("✗ Failed: ", gsm)
+    message("Error: ", e$message)
+     })
+}
+
+```
+
+```{r Sanity Check}
+##In this chunk I am only checking if I have all the required data with the correct names or not
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"
+files <- list.files(base_dir, pattern = "\\.h5$", recursive = TRUE, full.names = TRUE) ##list of files in the base_dir with.h5 as names
+length(files) 
+basename(files)
+gsm_info 
+library(Seurat)
+test <- Read10X_h5(files[1])  ##testing one file first
+class(test) #"dgCMatrix"
+dim(test) #33538 genes 4267 cells
+head(rownames(test))
+head(colnames(test))
+test[1:5, 1:5]
+```
+
+..............................................................From here Analysis Starts.....................................................................
+
+```{r Create Seurat Objects}
+## Each .h5 file contains the raw UMI count matrix of one sample.
+## Here, each count matrix is read and converted into an individual Seurat object. So, basically individual seurat objects for each sample
+
+
+seurat_list <- lapply(files, function(x) {    #x=individual file names all 26, so iteration x=1 and continue the function, then x=2 then continue the funtion with second file.
+  
+  counts <- Read10X_h5(x)
+  
+  CreateSeuratObject(
+    counts = counts,   #Use the count matrix I just created (counts) as the raw expression data.
+    project = basename(x),  #gives the Seurat object a project name based on the filename.
+    min.cells = 3,   #Keep a gene only if it is detected in at least 3 cells.
+    min.features = 200  #Keep a cell only if it has at least 200 detected genes.
+  ) 
+})
+
+names(seurat_list) <- basename(files) 
+
+length(seurat_list)       ## Number of Seurat objects created
+names(seurat_list)        ## Names of the samples
+```
+
+
+```{r Adding metadata to our seurat object}
+basename(files)
+head(gsm_info)
+colnames(gsm_info)
+
+# Extract GSM ID from each Seurat object name
+gsm_ids <- sub("_.*", "", names(seurat_list))
+
+# Check that every GSM ID exists in the metadata
+all(gsm_ids %in% gsm_info$GSM)   ##TRUE
+
+##Go through each Seurat object, find which GSM it belongs to, then add that GSM and its Title to the object's metadata. Because for now our seurat objects of every sample only has the count matrix not metadata or anyother detail. So we are adding this detail to our seurat object. 
+
+for (i in seq_along(seurat_list)) {  #For each position/index in my Seurat list, do the following.
+  
+  gsm <- gsm_ids[i]
+  
+  seurat_list[[i]]$GSM <- gsm_info[gsm, "GSM"]
+  seurat_list[[i]]$Title <- gsm_info[gsm, "Title"]
+}
+
+head(seurat_list[[1]]@meta.data)
+colnames(seurat_list[[1]]@meta.data)
+head(colnames(seurat_combined))
+
+```
+
+
+```{r Merging the Seurat Objects}
+sapply(seurat_list, ncol) 
+sapply(seurat_list, function(obj) {
+  sum(duplicated(rownames(GetAssayData(obj, layer = "counts"))))  ##checking duplicates
+})
+clean_seurat_list <- seurat_list ##just easier to remember for the downflow
+
+##Now next I merged all the 26 seurat objects to one so I could do QC and all necessary steps together
+
+seurat_combined <- merge(   #merge(x = first_object, y = other_object(s))
+  x = clean_seurat_list[[1]],
+  y = clean_seurat_list[-1],
+  add.cell.ids = names(clean_seurat_list)
+) 
+class(seurat_combined)
+dim(seurat_combined) ##131,784 cells and 26,506 genes
+unique(seurat_combined$orig.ident)
+head(colnames(seurat_combined))
+
+saveRDS(                                  ##so that next time we can upload this file and start working. 
+  seurat_combined,
+  file = file.path(outputDir, "GSE245601_seurat_combined_preQC.rds")
+)
+```
+
+...................Basic Data Collection is done....................
+Next tym upload only this file to work on "GSE245601_seurat_combined_preQC.rds". Command to upload and libraries, to be used is given below from the next chunk. 
+
+```{r Load the Libraries}
+library(Seurat)
+library(SeuratDisk)
+library(dplyr)
+library(R.utils)  
+library(ggplot2)
+library(ggExtra)
+library(RColorBrewer)
+library(openxlsx)
+library(dplyr)
+library(scales)
+library(HGNChelper)
+library(dittoSeq)
+library(harmony)
+library(batchelor)
+library(zellkonverter)
+library(SingleCellExperiment)
+library(scDblFinder)
+library(rtracklayer)
+```
+
+
+
+```{r Calculate QC Metrics for Combined Seurat Object}
+#For the directories
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  
+outputDir<- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Output"
+plotDir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Plots"
+
+
+#Load the .RDS object to R and check
+seurat_combined <- readRDS(file.path(outputDir, "GSE245601_seurat_combined_preQC.rds"))
+class(seurat_combined)
+dim(seurat_combined) # 26506 x 131784
+head(colnames(seurat_combined))  ## To view the first 20 row names (gene names) to check the gene naming format
+unique(seurat_combined$orig.ident)
+head(seurat_combined@meta.data)
+
+# Calculate the percentage of mitochondrial gene counts per cell."^MT-" matches genes beginning with "MT-".
+# The result is stored in the Seurat metadata as "percent.mt".
+seurat_combined[["percent.mt"]] <- PercentageFeatureSet(
+  seurat_combined,
+  pattern = "^MT-"
+)
+
+# Calculate the percentage of ribosomal gene counts per cell. "^RPL|^RPS" matches genes beginning with "RPL" or "RPS".
+# The result is stored in the Seurat metadata as "percent.rb".
+seurat_combined[["percent.rb"]] <- PercentageFeatureSet(
+  seurat_combined,
+  pattern = "^RPL|^RPS"
+)
+
+colnames(seurat_combined@meta.data)  # Display metadata column names to confirm that percent.mt and percent.rb have been successfully added.
+summary(seurat_combined$percent.mt) # Summarize the distribution of mitochondrial percentages across cells.
+summary(seurat_combined$percent.rb) # Summarize the distribution of ribosomal percentages across cells.
+summary(seurat_combined$nFeature_RNA)
+summary(seurat_combined$nCount_RNA)
+```
+```{r PreQC Visualization - Violin Plots}
+
+study_id <- "GSE245601" # Define study ID
+# Add sample information to metadata
+seurat_combined <- AddMetaData(seurat_combined,  metadata = seurat_combined$orig.ident,  col.name = "Sample") #Creates a new metadata column called Sample, using the existing orig.ident.
+head(seurat_combined@meta.data)
+
+# Function to generate and save QC violin plots for each sample
+save_violin_plots_separate <- function(
+  seurat_obj,  
+  plotDir,
+  study_id,
+  features = c( "nCount_RNA", "nFeature_RNA",  "percent.mt", "percent.rb" )
+) {
+ 
+  # Create plot directory if it does not already exist
+  if (!dir.exists(plotDir)) {
+    dir.create(plotDir, recursive = TRUE)
+  }
+  
+# Extract cell-level metadata
+  meta <- seurat_obj@meta.data
+
+# Convert sample identity to factor for plotting
+  meta$sample <- as.factor(meta$Sample)
+
+# Generate one plot for each QC metric
+  for (feat in features) {
+
+# Check whether the QC metric exists
+    if (!feat %in% colnames(meta)) {
+      warning(paste("Skipping", feat, "- not found in metadata"))
+      next
+    }
+
+    # Violin plot with boxplot overlay
+    p <- ggplot( meta, aes(x = sample, y = .data[[feat]])) + 
+      geom_violin( trim = TRUE, fill = "Red", alpha = 0.7) +
+      geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.6) +
+      labs( title = feat, x = "Sample",  y = feat ) + theme_bw(base_size = 14) +  theme(
+        axis.text.x = element_text(angle = 45,  hjust = 1),
+        plot.title = element_text(hjust = 0.5)
+      )
+
+    # Save plot
+    ggsave(filename = file.path(plotDir, paste0(study_id, "_preQC_", feat, "_violin.png")),
+      plot = p, width = 30, height = 10, dpi = 600, bg = "white" )
+  }
+}
+
+save_violin_plots_separate( seurat_combined, plotDir, study_id)    #Run the above function
+```
+
+```{r PreQC Visualization - scatter plot}
+# Scatter plot of nCount vs nFeature with marginal histograms
+
+study_id <- "GSE245601" # Define study ID
+density_scatter_plot <- function(seurat_obj, filename) {
+  
+  ## Create a data frame containing QC metrics for each cell
+  df <- data.frame(
+    log1p_nCount_RNA = log1p(seurat_obj$nCount_RNA),       # Total RNA molecules per cell
+    log1p_nFeature_RNA = log1p(seurat_obj$nFeature_RNA), # Number of detected genes per cell
+    GSM = seurat_obj$GSM
+  )
+  
+  ## Generate scatter plot
+  p <- ggplot( df, aes(x = log1p_nCount_RNA, y = log1p_nFeature_RNA, color = GSM)) +
+    geom_point(alpha = 0.3, size = 1.0) +
+    theme_minimal() +
+    theme(
+      plot.margin = margin(10, 20, 20, 30),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10) ,
+      legend.position.inside = c(0.05, 0.95),
+      legend.justification = c("left", "top"),
+      legend.key.size = unit(0.5, "cm")) +
+    guides(  color = guide_legend(
+        override.aes = list(size = 5) ) ) +
+    labs( x = "log1p(nCount_RNA)",  y = "log1p(nFeature_RNA)", colour = "Sample") +
+    guides(colour = guide_legend(ncol = 1))
+  
+  ## Add marginal histograms
+  p <- ggMarginal( p, type = "histogram", fill = "skyblue", bins = 40)
+  
+  ## Save plot
+  ggsave( filename, plot = p,  width = 8, height = 10,  dpi = 600, bg = "white" )
+}
+
+density_scatter_plot( seurat_combined, file.path( plotDir, paste0(study_id, "_preQC_density-scatter.png")))
+```
+
+
+
+```{r sanity check for preQC before the Application of stringent filters}
+##This chunk was done inorder to have a clear statistical and biological understanding of the data. Visualization of plots and the numbers definitely have different conclusions. I did not want to lose necessary data hence I performed this statistical chunk to reach to a logical conclusion which will be check visually again. 
+# ------------------------------------------------------------
+# 1. nFeature_RNA
+# ------------------------------------------------------------
+# Number of genes detected in each cell. Used as a measure of transcriptomic complexity.
+# Very low values may indicate empty droplets, poor capture or low-quality cells.
+# Very high values can indicate genuinely high-complexity cells or potential doublets/multiplets.
+summary(seurat_combined$nFeature_RNA) 
+quantile(seurat_combined$nFeature_RNA,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+
+# ------------------------------------------------------------
+# 2. nCount_RNA
+# ------------------------------------------------------------
+# Total number of detected RNA/UMI counts per cell.
+# Low values can indicate poor RNA capture or low-quality cells.
+# Extremely high values may represent high-RNA cells or potential doublets/multiplets.
+#
+# nCount_RNA is strongly right-skewed in this dataset, so both the central distribution and the extreme upper tail are examined.
+
+summary(seurat_combined$nCount_RNA)
+quantile(seurat_combined$nCount_RNA,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+
+# ------------------------------------------------------------
+# 3. percent.mt
+# ------------------------------------------------------------
+# Percentage of RNA counts derived from mitochondrial genes.
+# Elevated mitochondrial RNA can indicate cellular stress, damage, or compromised cell integrity.
+summary(seurat_combined$percent.mt)
+quantile(seurat_combined$percent.mt,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+
+# ------------------------------------------------------------
+# 4. percent.rb
+# ------------------------------------------------------------
+# Percentage of RNA counts derived from ribosomal genes.
+# Ribosomal transcripts are naturally abundant in cells.
+# Therefore, a high ribosomal fraction does not by itselfindicate poor cell quality.
+
+summary(seurat_combined$percent.rb)
+quantile(seurat_combined$percent.rb,
+         probs = c(0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1))
+#Investigate the potentially extreme populations
+sum(seurat_combined$nFeature_RNA >= 7000)
+sum(seurat_combined$percent.mt >= 15)
+sum(seurat_combined$nCount_RNA > 100000)
+sum(seurat_combined$nCount_RNA > 200000)
+sum(seurat_combined$percent.rb >= 40)
+
+# ============================================================
+# JOINT QC METRIC ANALYSIS
+# ============================================================
+# Individual QC metrics are not sufficient to classify a cell as poor quality. Therefore, combinations of metrics are examined to identify cells showing concordant evidence of poor quality or unusual complexity.
+
+# High-feature + high-count cells
+sum(
+  seurat_combined$nFeature_RNA >= 7000 &
+  seurat_combined$nCount_RNA >= 100000
+)
+# High-feature + high-mitochondrial cells
+sum(
+  seurat_combined$nFeature_RNA >= 7000 &
+  seurat_combined$percent.mt >= 15
+)
+# Low-feature + low-count + high-mitochondrial cells
+sum(
+  seurat_combined$nFeature_RNA < 1000 &
+  seurat_combined$nCount_RNA < 2000 &
+  seurat_combined$percent.mt >= 15
+)
+
+# ============================================================
+# SAMPLE-WISE ASSESSMENT OF LOW-QUALITY CELLS
+# ============================================================
+table(seurat_combined$GSM[    #thresholds such as 1000, 2000 and 15% are dataset-informed working boundaries, not universal biological cutoffs.
+  seurat_combined$nFeature_RNA < 1000 &
+  seurat_combined$nCount_RNA < 2000 &
+  seurat_combined$percent.mt >= 15
+])
+
+low_qc <- seurat_combined$nFeature_RNA < 1000 &
+          seurat_combined$nCount_RNA < 2000 &
+          seurat_combined$percent.mt >= 15
+
+sum(low_qc)  #6196cells
+
+qc_by_sample <- data.frame(Sample = seurat_combined$GSM, Low_QC = low_qc) # Calculate the proportion of low-quality cells in each sample
+head(qc_by_sample) 
+qc_summary <- aggregate(Low_QC ~ Sample, data = qc_by_sample, FUN = sum) # Number of low-QC cells per sample
+total_summary <- aggregate(Low_QC ~ Sample, data = qc_by_sample, FUN = length) # Total number of cells per sample
+qc_summary$Total_Cells <- total_summary$Low_QC # Add total cell numbers
+qc_summary$Percent_Low_QC <- (qc_summary$Low_QC / qc_summary$Total_Cells) * 100  # Calculate percentage of low-QC cells in each sample
+qc_summary
+
+library(writexl) # Save the sample-wise QC summary
+write_xlsx(
+  qc_summary,
+  path = file.path(outputDir, "GSE245601_low_QC_summary.xlsx")
+)
+# ============================================================
+# INVESTIGATION OF HIGH-COMPLEXITY CELLS
+# ============================================================
+# Very high nCount_RNA and nFeature_RNA values can represent genuinely high-complexity cells or potential doublets/multiplets. These cells are therefore investigated rather than removed automatically.
+
+#Define the high-complexity population. TRUE  → cell has BOTH nCount_RNA ≥ 100,000 AND nFeature_RNA ≥ 7,000, FALSE → cell does not meet both conditions
+high_qc <- seurat_combined$nCount_RNA >= 100000 &
+           seurat_combined$nFeature_RNA >= 7000 ##1226 cells in total
+
+table(seurat_combined$GSM[high_qc]) ##per sample how are the 1226 cells distributed 
+summary(seurat_combined$percent.mt[high_qc]) #we calculated the summary of percent.mt of these 1226 cells and saw that their mediam were low so not all of them are bad!! 
+
+quantile(  ##It means that the typical high-complexity cell has low mitochondrial contribution.That makes these cells much less suspicious as a general population.
+  seurat_combined$percent.mt[high_qc],
+  probs = c(0, 0.25, 0.5, 0.75, 0.95, 0.99, 1)
+)
+sum( high_qc & seurat_combined$percent.mt >= 15)  #How many high-complexity cells also have high mt% = 89cells
+table(seurat_combined$GSM[ high_qc & seurat_combined$percent.mt >= 15])  #Which samples contain those 89 cells = "GSM7845550", "GSM7845551" both are cell line data
+
+sum(
+  seurat_combined$GSM %in% c("GSM7845550", "GSM7845551") & #Check whether T47D (cell line) is responsible for our LOW-QC population 
+  seurat_combined$nFeature_RNA < 1000 &
+  seurat_combined$nCount_RNA < 2000 &
+  seurat_combined$percent.mt >= 15
+) #14cells
+
+#------------------------------------------------
+#Create final QC summary
+#------------------------------------------------
+qc_before_after <- data.frame(
+  Metric = c( "Cells before filtering", "Cells flagged for removal",  "Cells retained", "Percentage removed"),
+  Value = c( ncol(seurat_combined), sum(low_qc), sum(!low_qc), round(mean(low_qc) * 100, 2)
+  )
+)
+
+qc_before_after
+```
+```{r Cell-level QC filtering - Four Metrics and Doublets}
+seurat_filtered <- subset( seurat_combined,
+   subset =
+    nCount_RNA < 100000 &
+    nFeature_RNA < 7000 &
+    percent.mt < 12 &
+    percent.rb < 50
+)
+
+# Check dimensions
+dim(seurat_filtered)   # 26506genes  116174cells
+
+# Number of cells retained
+ncol(seurat_filtered)   #116174
+
+# Number of cells removed
+ncol(seurat_combined) - ncol(seurat_filtered) # 15610
+
+# Percentage retained
+ncol(seurat_filtered) / ncol(seurat_combined) * 100  #88.15
+
+
+##for doublets
+
+
+## Identify samples
+sample_ids <- unique(seurat_filtered$orig.ident)
+
+## Store doublet results for each sample
+doublet_results <- list()
+
+## Run scDblFinder sample-wise
+for (sample in sample_ids) {
+  
+  cat("\nProcessing:", sample, "\n")
+  
+  sample_obj <- subset( seurat_filtered, subset = orig.ident == sample)
+  
+  sce <- as.SingleCellExperiment(sample_obj)
+  sce <- scDblFinder(sce)
+  
+  doublet_results[[sample]] <- data.frame(
+    cell = colnames(sce),
+    scDblFinder.class = sce$scDblFinder.class,
+    scDblFinder.score = sce$scDblFinder.score )
+  
+  cat( "Doublets:", sum(sce$scDblFinder.class == "doublet"), "of",   ncol(sce), "\n")
+  
+  rm(sample_obj, sce)
+  gc()
+}
+
+doublet_summary <- do.call( rbind,
+  lapply(  names(doublet_results),
+    function(x) { data.frame( Sample = x,
+        Total_Cells = nrow(doublet_results[[x]]),
+        Doublets = sum( doublet_results[[x]]$scDblFinder.class == "doublet"  ),
+        Doublet_Percent = mean( doublet_results[[x]]$scDblFinder.class == "doublet"  ) * 100)}
+  )
+)
+
+doublet_summary
+
+doublet_cells <- unlist(
+  lapply( doublet_results,
+    function(x) { x$cell[x$scDblFinder.class == "doublet"] }
+  )
+)
+
+seurat_cleanQC <- subset( seurat_filtered,cells = setdiff( colnames(seurat_filtered), doublet_cells ))  #106334
+```
+
+```{r Filtering Summary }
+low_qc <- seurat_cleanQC$nFeature_RNA < 1000 &
+          seurat_cleanQC$nCount_RNA < 2000 &
+          seurat_cleanQC$percent.mt >= 15
+
+sum(low_qc) #0 = not a single cell simultaneously meets all three stringent low-QC conditions
+
+# Cell retention summary
+
+initial_cells <- ncol(seurat_combined)
+
+after_qc_cells <- ncol(seurat_filtered)
+
+after_doublet_cells <- ncol(seurat_cleanQC)
+
+retention_summary <- data.frame(
+  Stage = c( "Initial", "After QC filtering", "After doublet removal" ),
+  Cells = c( initial_cells, after_qc_cells, after_doublet_cells ),
+  Retained_percent = round(
+    c(  initial_cells, after_qc_cells, after_doublet_cells ) / initial_cells * 100, 2 )
+)
+
+retention_summary #106334 cells = 80.69%
+```
+
+
+```{r Post QC Visualization}
+# Scatter plot of nCount vs nFeature with marginal histograms
+
+study_id <- "GSE245601" # Define study ID
+density_scatter_plot <- function(seurat_obj, filename) {
+  
+  ## Create a data frame containing QC metrics for each cell
+  df <- data.frame(
+    log1p_nCount_RNA = log1p(seurat_obj$nCount_RNA),       # Total RNA molecules per cell
+    log1p_nFeature_RNA = log1p(seurat_obj$nFeature_RNA), # Number of detected genes per cell
+    GSM = seurat_obj$GSM
+  )
+  
+  ## Generate scatter plot
+  p <- ggplot( df, aes(x = log1p_nCount_RNA, y = log1p_nFeature_RNA, color = GSM)) +
+    geom_point(alpha = 0.3, size = 1.0) +
+    theme_minimal() +
+    theme(
+      plot.margin = margin(10, 20, 20, 30),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10) ,
+      legend.position.inside = c(0.05, 0.95),
+      legend.justification = c("left", "top"),
+      legend.key.size = unit(0.5, "cm")) +
+    guides(  color = guide_legend(
+        override.aes = list(size = 5) ) ) +
+    labs( x = "log1p(nCount_RNA)",  y = "log1p(nFeature_RNA)", colour = "Sample") +
+    guides(colour = guide_legend(ncol = 1))
+  
+  ## Add marginal histograms
+  p <- ggMarginal( p, type = "histogram", fill = "skyblue", bins = 40)
+  
+  ## Save plot
+  ggsave( filename, plot = p,  width = 8, height = 10,  dpi = 600, bg = "white" )
+}
+
+density_scatter_plot( seurat_cleanQC, file.path( plotDir, paste0(study_id, "_postQC_density-scatter.png")))
+
+```
+
+
+
+``` {r PostQC Visualization}
+study_id <- "GSE245601" # Define study ID
+head(seurat_cleanQC@meta.data)
+
+# Function to generate and save QC violin plots for each sample
+save_violin_plots_separate <- function(
+  seurat_obj,  
+  plotDir,
+  study_id,
+  features = c( "nCount_RNA", "nFeature_RNA",  "percent.mt", "percent.rb" )
+) {
+ 
+  # Create plot directory if it does not already exist
+  if (!dir.exists(plotDir)) {
+    dir.create(plotDir, recursive = TRUE)
+  }
+  
+# Extract cell-level metadata
+  meta <- seurat_obj@meta.data
+
+# Convert sample identity to factor for plotting
+  meta$sample <- as.factor(meta$GSM)
+ cutoffs <- c(nCount_RNA=100000, nFeature_RNA=7000, percent.mt=12, percent.rb=50)
+ 
+# Generate one plot for each QC metric
+  for (feat in features) {
+
+# Check whether the QC metric exists
+    if (!feat %in% colnames(meta)) {
+      warning(paste("Skipping", feat, "- not found in metadata"))
+      next
+    }
+
+    # Violin plot with boxplot overlay
+    p <- ggplot( meta, aes(x = sample, y = .data[[feat]])) + 
+      geom_violin( trim = TRUE, fill = "Red", alpha = 0.7) +
+      geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.6) +
+       geom_hline(yintercept=cutoffs[feat], linetype="dashed") +
+      labs( title = feat, x = "Sample",  y = feat ) + theme_bw(base_size = 14) +  theme(
+        axis.text.x = element_text(angle = 45,  hjust = 1),
+        plot.title = element_text(hjust = 0.5)
+      )
+
+    # Save plot
+    ggsave(filename = file.path(plotDir, paste0(study_id, "_postQC_", feat, "_violin.png")),
+      plot = p, width = 30, height = 10, dpi = 600, bg = "white" )
+  }
+}
+
+save_violin_plots_separate( seurat_cleanQC, plotDir, study_id)    #Run the above function
+
+saveRDS( seurat_cleanQC, file = file.path(outputDir, "GSE245601_seurat_cleanQC.rds"))
+file.exists(file.path(outputDir, "GSE245601_seurat_cleanQC.rds")) #TRUE
+ncol(seurat_cleanQC) #106334
+```
+``` {r Filtering Protein Coding Genes}
+seurat_cleanQC <- readRDS("D:/Bidya Work/single/GSE245601_Breast_Cancer/Output/GSE245601_seurat_cleanQC.rds")  #Load the seurat_cleanQC file
+gtf_path <- file.path(
+  "D:/Bidya Work/single/GSE245601_Breast_Cancer",
+  "gencode.v37.annotation.gtf.gz"
+)
+file.exists(gtf_path)
+gtf <- import(gtf_path)
+colnames(gtf) #NULL = gtf is a GRanges object, so its annotation fields are stored as metadata columns, which we can access with mcols(gtf).
+head(gtf)
+table(gtf$type)
+table(gtf$gene_type)[1:20]
+#protein_coding = 2729272  That's the number of GTF annotation rows whose gene_type is protein-coding—because the GTF contains gene, transcript, exon, CDS, UTR, etc. records.
+protein_coding_genes_gtf <- gtf[ gtf$type == "gene" & gtf$gene_type == "protein_coding"]
+length(protein_coding_genes_gtf) #19951
+head(data.frame(
+    gene_id = protein_coding_genes_gtf$gene_id,
+    gene_name = protein_coding_genes_gtf$gene_name,
+    gene_type = protein_coding_genes_gtf$gene_type))
+
+protein_coding_gene_names <- protein_coding_genes_gtf$gene_name
+sum(rownames(seurat_cleanQC) %in% protein_coding_gene_names) #17706 #we'd be retaining about 66.8% of the current features.
+dim(seurat_cleanQC)
+
+non_protein_coding <- setdiff(rownames(seurat_cleanQC),  protein_coding_gene_names) #So we are checking about the rest of it
+length(non_protein_coding) #8800
+head(non_protein_coding, 50)
+grep("^MT-", non_protein_coding, value = TRUE)[1:20]
+
+
+#Checking the 8800 non coding features properly so we don't lose important ones
+# Sanity check: verify how representative excluded genes are classified in GENCODE v37.
+# This confirms that genes such as FAM87B and LINC00115 are annotated as non-coding and were therefore correctly excluded from the protein-coding gene set.
+gtf[ gtf$type == "gene" & gtf$gene_name == "FAM87B", c("gene_id", "gene_name", "gene_type")]
+gtf[ gtf$type == "gene" & gtf$gene_name %in% c("LINC00115", "LINC01342", "FAM87B"), c("gene_id", "gene_name", "gene_type")] ## Check multiple excluded genes to confirm consistent GENCODE annotation.
+
+seurat_protein_coding <- subset( seurat_cleanQC, features = protein_coding_gene_names)
+dim(seurat_protein_coding) #  17706 genes 106334 cells = Verification that all have protein coding genes
+all(rownames(seurat_protein_coding) %in% protein_coding_gene_names) #Verify that all remaining features are protein-coding
+saveRDS( seurat_protein_coding, file.path(outputDir, "GSE245601_seurat_protein_coding.rds"))
+
+```
+
+
+---------------------------------------- DOWNSTREAM ANALYSIS AND PROCESSING CONTINUES ON ANOTHER FILE --------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
