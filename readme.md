@@ -902,7 +902,7 @@ Overall, the post-QC visualizations indicated that the major cell population was
 
 ## 12. Fetching and filtering the Protein-Coding Genes
 
-Following cell-level quality control, genes were annotated using the GENCODE human GRCh38 annotation. Gene biotypes were used to distinguish protein-coding genes from other genomic features such as lncRNAs, pseudogenes, and other non-protein-coding transcripts. To fetch the list I used GENCODE. For this analysis, GENCODE v37 was used to identify genes annotated as protein_coding before downstream normalization and analysis. (Gencode Release 37)[https://www.gencodegenes.org/human/release_37.html]. 
+Following cell-level quality control, genes were annotated using the GENCODE human GRCh38 annotation. Gene biotypes were used to distinguish protein-coding genes from other genomic features such as lncRNAs, pseudogenes, and other non-protein-coding transcripts. To fetch the list I used GENCODE. For this analysis, GENCODE v37 was used to identify genes annotated as protein_coding before downstream normalization and analysis. [Gencode Release 37](https://www.gencodegenes.org/human/release_37.html). 
 
 
 
