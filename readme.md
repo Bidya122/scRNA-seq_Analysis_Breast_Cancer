@@ -900,6 +900,9 @@ After QC filtering and doublet removal, violin plots were generated separately f
 The main exception was nCount_RNA, which continued to show a relatively long upper tail across several samples. These cells were retained because they remained within the predefined nCount_RNA < 100,000 threshold and were not removed solely based on their position in the upper tail. Since high RNA counts can also occur in biologically high-RNA cells, an additional arbitrary cutoff was not applied at this stage. The nCount_RNA distribution will therefore be monitored during subsequent analysis. If a specific downstream phase or selected sample subset reveals a clear technical concern associated with these high-count cells, their effect can be evaluated and addressed at that stage rather than removing them prematurely.    
 Overall, the post-QC visualizations indicated that the major cell population was retained while the most extreme QC populations had been removed.      
 
+## 12. Fetching and filtering the Protein-Coding Genes
+
+Following cell-level quality control, genes were annotated using the GENCODE human GRCh38 annotation. Gene biotypes were used to distinguish protein-coding genes from other genomic features such as lncRNAs, pseudogenes, and other non-protein-coding transcripts. To fetch the list I used GENCODE. For this analysis, GENCODE v37 was used to identify genes annotated as protein_coding before downstream normalization and analysis. (Gencode Release 37)[https://www.gencodegenes.org/human/release_37.html]. 
 
 
 
