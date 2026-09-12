@@ -946,6 +946,11 @@ dim(seurat_protein_coding) #  17706 genes 106334 cells = Verification that all h
 all(rownames(seurat_protein_coding) %in% protein_coding_gene_names) #Verify that all remaining features are protein-coding
 saveRDS( seurat_protein_coding, file.path(outputDir, "GSE245601_seurat_protein_coding.rds"))
 ```
+Following cell-level quality control, the genes detected in the dataset were cross-referenced against the GENCODE human GRCh38 annotation. GENCODE Release 37 was used to identify genes annotated as protein_coding at the gene level. Only gene-level records with the biotype protein_coding were retained, resulting in 19,951 protein-coding genes in the GENCODE reference. These gene symbols were matched against the features present in the quality-controlled Seurat object. Of the 26,506 features in the object, 17,706 matched the GENCODE protein-coding gene set. The remaining 8,800 features included non-protein-coding genomic features such as lncRNAs and antisense transcripts. Representative excluded features were cross-checked against the GENCODE annotation to verify their assigned gene biotypes.
+The Seurat object was then subsetted to the 17,706 protein-coding genes while retaining all 106,334 QC-passed cells. The resulting object was saved as GSE245601_seurat_protein_coding.rds and used as the input for downstream normalization and analysis.    
+
+# PHASE 1 - NORMAL v/s TUMOR SAMPLES
+
 
 
 
