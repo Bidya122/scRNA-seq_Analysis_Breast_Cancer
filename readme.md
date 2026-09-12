@@ -951,6 +951,38 @@ The Seurat object was then subsetted to the 17,706 protein-coding genes while re
 
 # PHASE 1 - NORMAL v/s TUMOR SAMPLES
 
+The first phase of this analysis focuses on characterizing transcriptomic differences between normal breast tissue and primary breast tumor tissue at single-cell resolution. To establish a baseline comparison without introducing treatment-related effects, only Control samples were included in this phase. Tamoxifen-treated samples and the T47D cell-line samples were excluded. The analysis includes: 2 normal control samples: Normal_01_Control and Normal_02_Control and 10 primary tumor control samples: Tumor_01_Control through Tumor_10_Control. This resulted in 57,420 cells across 12 control samples after quality control and protein-coding gene filtering. 
+
+## 1. Dataset Check before the Downstream Analysis
+
+```bash
+seurat_protein_coding <- readRDS( file.path(outputDir, "GSE245601_seurat_protein_coding.rds")) #Load the RDS file 
+dim(seurat_protein_coding) #17706 genes 106334 cells
+head(seurat_protein_coding@meta.data)
+unique(seurat_protein_coding$Title)
+seurat_protein_coding$Condition <- ifelse( grepl("Normal_", seurat_protein_coding$Title),"Normal",
+  ifelse(  grepl("Tumor_", seurat_protein_coding$Title), "Tumor", "T47D"))
+table(seurat_protein_coding$Condition) #Normal: 21,385 cells; Tumor: 82,968 cells; T47D: 1,981 cells. Total = 106,334 cells.
+
+#Create Phase1 Object
+seurat_phase1 <- subset(seurat_protein_coding,
+  subset = grepl("Normal_0[12]_Control", Title) |
+           grepl("Tumor_.*_Control", Title))
+dim(seurat_phase1) # 17430 genes 57420 cells
+table(seurat_phase1$Condition) #Normal 13767 Tumor  43653 
+sample_info <- unique( seurat_phase1@meta.data[, c("GSM", "Title")])
+sample_info #12 Samples
+unique(seurat_phase1$Title)
+
+saveRDS( seurat_phase1, file.path( outputDir, "GSE245601_seurat_phase1_normal_vs_tumor_control.rds" ))
+```
+<img width="1061" height="143" alt="image" src="https://github.com/user-attachments/assets/acc2cb19-e09b-413c-86cb-7dc428e34eb8" /> 
+
+After saving the correct sample data into .RDS I went on to check the QC again, to check if anything else was needed to be omitted before the downstream analysis involving Normalization, UMAP, PCA, Normal v/s Tumor Characterization and Marker Analysis. 
+
+
+
+
 
 
 
