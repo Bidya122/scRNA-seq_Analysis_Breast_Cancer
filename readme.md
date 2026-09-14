@@ -1072,6 +1072,8 @@ seurat_phase1_processed <- RunPCA( seurat_phase1_processed, npcs = 100)
 ```
 <img width="673" height="513" alt="image" src="https://github.com/user-attachments/assets/d95e2ee1-f3f1-43a7-85b7-1d547c37a325" /> <img width="1317" height="662" alt="image" src="https://github.com/user-attachments/assets/6355da42-9551-41a1-8755-df36c26bc0a9" />
 
+After QC and doublet removal, the filtered dataset was normalized using LogNormalize with a scale factor of 10,000 to reduce differences in sequencing depth between cells and make gene expression values comparable. I then selected 2,500 highly variable genes using the VST method, as these genes capture the major sources of variation across cells and provide informative features for downstream analysis. The selected features were centered and scaled before performing PCA. I initially calculated 100 principal components so that the variance captured by each PC could be evaluated before deciding how many PCs to use for downstream clustering and UMAP analysis.      
+
 
 
 
