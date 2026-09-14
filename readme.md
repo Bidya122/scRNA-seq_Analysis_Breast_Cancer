@@ -1049,7 +1049,30 @@ seurat_phase1@meta.data %>%
     dplyr::arrange(desc(cells_above_25k))
 ```
 
-Cells were filtered based on the following QC criteria before: nFeature_RNA ≥ 200 and <7,000, nCount_RNA <100,000, percent.mt <12%, and percent.rb <50%. All the 12 samples which was going to be taken downstream were plotted again. A stricter nCount_RNA cutoff of 25,000 was evaluated but not applied. Although 3,404 cells had nCount_RNA >25,000, these cells were retained because they showed a median of 5,630 detected genes, low median mitochondrial content (2.08%), and no independent indication of poor cell quality. Therefore, a stricter nCount_RNA cutoff of 25,000 was not applied. 
+Cells were filtered based on the following QC criteria before: nFeature_RNA ≥ 200 and <7,000, nCount_RNA <100,000, percent.mt <12%, and percent.rb <50%. All the 12 samples which was going to be taken downstream were plotted again. A stricter nCount_RNA cutoff of 25,000 was evaluated but not applied. Although 3,404 cells had nCount_RNA >25,000, these cells were retained because they showed a median of 5,630 detected genes, low median mitochondrial content (2.08%), and no independent indication of poor cell quality. Therefore, a stricter nCount_RNA cutoff of 25,000 was not applied. So the file to be taken forward for the rest of the analysis is `GSE245601_seurat_phase1_normal_vs_tumor_control.rds`. 
+
+## 3. Normalization and Scaling
+
+```bash
+# Normalize gene expression values for each cell using LogNormalize.
+# Expression counts are normalized by the total RNA count per cell, multiplied by a scale factor of 10,000, and log-transformed.
+cat("Normalizing data using LogNormalize method (scale factor = 10,000)...\n")
+seurat_phase1_processed <- NormalizeData(  seurat_phase1, normalization.method = "LogNormalize",  scale.factor = 10000)
+
+# Identify highly variable genes using the VST method.
+# These genes are used to capture major sources of variationin downstream dimensionality reduction.
+seurat_phase1_processed <- FindVariableFeatures( seurat_phase1_processed, selection.method = "vst",  nfeatures = 2500) 
+#2,500 is a conventional/default-type choice in many Seurat workflows, not a magical biological cutoff.
+
+# Center and scale the expression values of the selected features. This gives each gene approximately mean = 0 and SD = 1 before PCA.
+seurat_phase1_processed <- ScaleData(seurat_phase1_processed)
+
+# Perform PCA using the scaled highly variable genes. Up to 100 PCs are calculated for subsequent dimensionality assessment.
+seurat_phase1_processed <- RunPCA( seurat_phase1_processed, npcs = 100)
+```
+<img width="673" height="513" alt="image" src="https://github.com/user-attachments/assets/d95e2ee1-f3f1-43a7-85b7-1d547c37a325" /> <img width="1317" height="662" alt="image" src="https://github.com/user-attachments/assets/6355da42-9551-41a1-8755-df36c26bc0a9" />
+
+
 
 
 
