@@ -980,6 +980,61 @@ saveRDS( seurat_phase1, file.path( outputDir, "GSE245601_seurat_phase1_normal_vs
 
 After saving the correct sample data into .RDS I went on to check the QC again, to check if anything else was needed to be omitted before the downstream analysis involving Normalization, UMAP, PCA, Normal v/s Tumor Characterization and Marker Analysis. 
 
+## 2. QC Check before the downstream analysis
+
+```bash
+study_id <- "GSE245601"
+
+save_violin_plots_separate <- function( seurat_obj, phase1Dir, study_id,
+                                       features = c( "nCount_RNA",  "nFeature_RNA", "percent.mt", "percent.rb" )) {
+  
+  # Ensure output directory exists
+  if (!dir.exists(phase1Dir)) {
+    dir.create(phase1Dir, recursive = TRUE)}
+  
+  # Extract metadata
+  meta <- seurat_obj@meta.data
+  
+  # Create sample identity for x-axis
+  meta$sample <- as.factor(meta$orig.ident)
+  
+  # Generate one plot for each QC metric
+  for (feat in features) {
+    
+    if (!feat %in% colnames(meta)) {
+      warning(paste("Skipping", feat, "- not found in metadata"))
+      next
+    }
+    
+    p <- ggplot( meta,
+      aes(x = sample, y = .data[[feat]]) ) +
+      geom_violin(  trim = TRUE, fill = "red", alpha = 0.7 ) +
+      geom_boxplot( width = 0.1, outlier.shape = NA, alpha = 0.6 ) +
+      labs( title = feat, x = "Sample", y = feat ) +
+      theme_bw(base_size = 14) +
+      theme( axis.text.x = element_text( angle = 45, hjust = 1 ),
+        plot.title = element_text(hjust = 0.5))
+    
+    ggsave( filename = file.path( phase1Dir, paste0(  study_id, "_Phase1_check_", feat, "_violin.png" )),
+      plot = p, width = 16, height = 9,  dpi = 400, bg = "white"  )
+  }
+}
+
+save_violin_plots_separate( seurat_phase1, phase1Dir, study_id)
+```
+<img width="1297" height="737" alt="image" src="https://github.com/user-attachments/assets/6e6a9c4c-3bc8-4acb-a36a-75728b9c9ed4" />
+
+<img width="1306" height="746" alt="image" src="https://github.com/user-attachments/assets/7058b9e5-4c3e-4751-b932-bde84316addf" />
+
+<img width="1302" height="747" alt="image" src="https://github.com/user-attachments/assets/c913837e-9d1f-4de0-afa9-4046c47a3df6" />
+
+<img width="1307" height="748" alt="image" src="https://github.com/user-attachments/assets/f0f005b4-c550-4bb6-b323-4553ceeb61d2" />
+
+
+
+
+
+
 
 
 
