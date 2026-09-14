@@ -1030,7 +1030,26 @@ save_violin_plots_separate( seurat_phase1, phase1Dir, study_id)
 
 <img width="1307" height="748" alt="image" src="https://github.com/user-attachments/assets/f0f005b4-c550-4bb6-b323-4553ceeb61d2" />
 
+```bash
+sum(seurat_phase1$nCount_RNA > 25000)
 
+seurat_phase1@meta.data %>%
+    dplyr::filter(nCount_RNA > 25000) %>%
+    dplyr::summarise(
+        n_cells = dplyr::n(),
+        median_nFeature = median(nFeature_RNA),
+        median_nCount = median(nCount_RNA),
+        median_mt = median(percent.mt),
+        median_rb = median(percent.rb)
+    )
+
+seurat_phase1@meta.data %>%
+    dplyr::filter(nCount_RNA > 25000) %>%
+    dplyr::count(orig.ident, name = "cells_above_25k") %>%
+    dplyr::arrange(desc(cells_above_25k))
+```
+
+Cells were filtered based on the following QC criteria before: nFeature_RNA ≥ 200 and <7,000, nCount_RNA <100,000, percent.mt <12%, and percent.rb <50%. All the 12 samples which was going to be taken downstream were plotted again. A stricter nCount_RNA cutoff of 25,000 was evaluated but not applied. Although 3,404 cells had nCount_RNA >25,000, these cells were retained because they showed a median of 5,630 detected genes, low median mitochondrial content (2.08%), and no independent indication of poor cell quality. Therefore, a stricter nCount_RNA cutoff of 25,000 was not applied. 
 
 
 
