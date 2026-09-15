@@ -1165,6 +1165,8 @@ ggsave(filename = file.path(phase1Dir, paste0(study_id, "_UMAP_pca_clusters.png"
 
 <img width="1161" height="251" alt="image" src="https://github.com/user-attachments/assets/2f7e3fed-d696-4df5-84fb-93e664521fd8" />
 
+<img width="997" height="81" alt="image" src="https://github.com/user-attachments/assets/545fef9d-0ead-4baa-b217-dc2c9b54ba7b" />
+
 Using the first 35 selected PCs, UMAP was performed to generate a two-dimensional representation of the cellular transcriptomic structure while preserving local neighborhood relationships. A PCA-based nearest-neighbor graph was then constructed using the same 35 PCs, followed by Louvain graph-based clustering at a resolution of 0.8. The analysis included 57,420 cells and resulted in 24 final clusters. Cluster sizes ranged from 121 to 6,672 cells. The resulting UMAP was visualized and saved for downstream assessment of cluster structure and biological identity.    
 
 
