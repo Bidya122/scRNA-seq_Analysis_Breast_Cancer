@@ -1126,6 +1126,49 @@ PCA dimensionality assessment:
 - PCs required for 95% cumulative variance: 79
 - PCs selected for downstream analysis: 1–35
 
+## 5. UMAP & Clustering on unintegrated data
+
+```bash
+library(glue)
+study_id <- "GSE245601"
+
+# Run UMAP using the first 35 PCs selected during PCA assessment.
+# UMAP provides a 2D representation of the high-dimensional PCA space while preserving local cell-neighborhood relationships.
+seurat_phase1_processed <- RunUMAP(  seurat_phase1_processed, dims = 1:35)
+
+# Construct a nearest-neighbor graph using the first 35 PCA dimensions.
+# This graph represents similarity between cells and is used for clustering.
+seurat_phase1_processed <- FindNeighbors( seurat_phase1_processed,  dims = 1:35, reduction = "pca", graph.name = "pca_nn")
+
+# Perform graph-based clustering.
+# Resolution = 0.8 controls cluster granularity.
+seurat_phase1_processed <- FindClusters(  seurat_phase1_processed, resolution = 0.8, graph.name = "pca_nn", cluster.name = "pca_clusters")
+
+# Count the number of identified clusters.
+n_clusters <- length(unique(seurat_phase1_processed$pca_clusters))
+
+cat(glue( "Clustering complete. Number of clusters: {n_clusters}\n"))
+
+# Display the number of cells in each cluster.
+table(seurat_phase1_processed$pca_clusters)
+
+# UMAP colored by PCA-based clusters, shows the cell types, so cells that are similar stay close together in 2D. Each cluster (represented by a color) groups cells with similar overall gene expression patterns.
+
+umap_clusters <- DimPlot( seurat_phase1_processed, reduction = "umap",  group.by = "pca_clusters", label = TRUE) +
+  labs(title = "UMAP: PCA-Based Clusters")
+
+ggsave(filename = file.path(phase1Dir, paste0(study_id, "_UMAP_pca_clusters.png")), plot = umap_clusters,  width = 8,  height = 6,  bg = "white")
+```
+<img width="983" height="747" alt="image" src="https://github.com/user-attachments/assets/0d485cf1-419c-4ef5-970f-7832b1862350" />
+
+<img width="1167" height="432" alt="image" src="https://github.com/user-attachments/assets/ddd85bb8-1a57-4fbe-9509-0a356e70fe79" />
+
+<img width="1161" height="251" alt="image" src="https://github.com/user-attachments/assets/2f7e3fed-d696-4df5-84fb-93e664521fd8" />
+
+Using the first 35 selected PCs, UMAP was performed to generate a two-dimensional representation of the cellular transcriptomic structure while preserving local neighborhood relationships. A PCA-based nearest-neighbor graph was then constructed using the same 35 PCs, followed by Louvain graph-based clustering at a resolution of 0.8. The analysis included 57,420 cells and resulted in 24 final clusters. Cluster sizes ranged from 121 to 6,672 cells. The resulting UMAP was visualized and saved for downstream assessment of cluster structure and biological identity.    
+
+
+
 
 
 
