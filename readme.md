@@ -1107,6 +1107,17 @@ ggsave( file.path(phase1Dir, paste0(study_id, "_ElbowPlot.png")),
 <img width="1048" height="35" alt="image" src="https://github.com/user-attachments/assets/74bade5a-5472-4497-8703-d758d056a577" />
 <img width="361" height="56" alt="image" src="https://github.com/user-attachments/assets/c6728463-ef49-45a2-87c2-fa5f99358cbc" />
 
+```bash
+pca_stdev <- seurat_phase1_processed[["pca"]]@stdev  # Extract the standard deviation for each principal component (PC) from the PCA reduction object.
+pca_var_explained <- (pca_stdev^2) / sum(pca_stdev^2) * 100  # Calculate the percentage of variance explained by each PC. Variance explained is computed as the squared standard deviation and divided by the total variance, multiplied by 100.
+total_var<- sum(pca_var_explained[1:35])  # Compute the total variance explained by the top 35 PCs. This helps quantify how much biological variation is retained when using 35 dimensions for downstream analyses.
+
+cat("Total variance explained by top PCs:", round(total_var, 2), "%\n")   # Print the total variance explained by the top PCs.
+##60–85% variance explained is very typical
+##100% is neither possible nor desirable (that would mean you kept all the noise)
+##80% is a healthy balance between signal retention and noise reduction
+```
+
 PCA dimensionality was assessed using the variance explained by individual PCs, cumulative variance, and the elbow plot. The first 100 PCs were evaluated, with the elbow plot showing a major inflection around PC20. The first 35 PCs explained 80.37% of the total variance, while 79 PCs were required to explain 95% of the cumulative variance. Based on the elbow plot and the substantial variance retained by the first 35 PCs, PCs 1–35 were selected for downstream UMAP visualization, nearest-neighbor graph construction, and clustering.     
 PCA dimensionality assessment:    
 - PCs calculated: 100
@@ -1114,6 +1125,7 @@ PCA dimensionality assessment:
 - Variance explained by PCs 1–35: 80.37%
 - PCs required for 95% cumulative variance: 79
 - PCs selected for downstream analysis: 1–35
+
 
 
 
