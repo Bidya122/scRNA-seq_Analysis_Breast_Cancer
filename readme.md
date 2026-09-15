@@ -1074,7 +1074,46 @@ seurat_phase1_processed <- RunPCA( seurat_phase1_processed, npcs = 100)
 
 After QC and doublet removal, the filtered dataset was normalized using LogNormalize with a scale factor of 10,000 to reduce differences in sequencing depth between cells and make gene expression values comparable. I then selected 2,500 highly variable genes using the VST method, as these genes capture the major sources of variation across cells and provide informative features for downstream analysis. The selected features were centered and scaled before performing PCA. I initially calculated 100 principal components so that the variance captured by each PC could be evaluated before deciding how many PCs to use for downstream clustering and UMAP analysis.      
 
+## 4. Principal Component Selection and Variance Analysis_Elbow Plot
 
+```bash
+study_id <- "GSE245601"
+# Get the standard deviation for each PC and calculate the variance explained.
+stdev <- seurat_phase1_processed[["pca"]]@stdev
+
+# Calculate the proportion of variance explained by each PC.
+var_explained <- stdev^2 / sum(stdev^2)
+
+# Calculate cumulative variance explained across PCs.
+cum_var <- cumsum(var_explained)
+
+# Store PCA variance metrics in a data frame.
+pca_var_df <- data.frame( PC = 1:length(stdev), Variance = var_explained, CumulativeVariance = cum_var)
+pca_var_df
+
+# Identify the number of PCs required to explain at least 95% of the variance.
+num_PCs_95 <- min(which(cum_var >= 0.95))
+num_PCs_95
+
+# Generate the PCA Elbow Plot.
+elbow_plot <- ElbowPlot( seurat_phase1_processed, ndims = 100,  reduction = "pca") +
+    labs(title = "PCA Elbow Plot for Dimensionality Selection")
+
+ggsave( file.path(phase1Dir, paste0(study_id, "_ElbowPlot.png")),
+    elbow_plot, width = 8, height = 6, bg = "white")
+```
+<img width="981" height="738" alt="image" src="https://github.com/user-attachments/assets/e98b1d3b-08e5-4668-9a71-810a77ab41aa" />
+
+<img width="1048" height="35" alt="image" src="https://github.com/user-attachments/assets/74bade5a-5472-4497-8703-d758d056a577" />
+<img width="361" height="56" alt="image" src="https://github.com/user-attachments/assets/c6728463-ef49-45a2-87c2-fa5f99358cbc" />
+
+PCA dimensionality was assessed using the variance explained by individual PCs, cumulative variance, and the elbow plot. The first 100 PCs were evaluated, with the elbow plot showing a major inflection around PC20. The first 35 PCs explained 80.37% of the total variance, while 79 PCs were required to explain 95% of the cumulative variance. Based on the elbow plot and the substantial variance retained by the first 35 PCs, PCs 1–35 were selected for downstream UMAP visualization, nearest-neighbor graph construction, and clustering.     
+PCA dimensionality assessment:    
+- PCs calculated: 100
+- Major elbow: ~PC20
+- Variance explained by PCs 1–35: 80.37%
+- PCs required for 95% cumulative variance: 79
+- PCs selected for downstream analysis: 1–35
 
 
 
