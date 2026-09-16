@@ -1169,6 +1169,39 @@ ggsave(filename = file.path(phase1Dir, paste0(study_id, "_UMAP_pca_clusters.png"
 
 Using the first 35 selected PCs, UMAP was performed to generate a two-dimensional representation of the cellular transcriptomic structure while preserving local neighborhood relationships. A PCA-based nearest-neighbor graph was then constructed using the same 35 PCs, followed by Louvain graph-based clustering at a resolution of 0.8. The analysis included 57,420 cells and resulted in 24 final clusters. Cluster sizes ranged from 121 to 6,672 cells. The resulting UMAP was visualized and saved for downstream assessment of cluster structure and biological identity.    
 
+## 6. clustering by condition and Saving the Unintegrated Seurat Object 
+
+```bash
+head(seurat_phase1_processed@meta.data, 3)
+colnames(seurat_phase1_processed@meta.data)
+table(seurat_phase1_processed$Condition)
+umap_condition <- DimPlot(  seurat_phase1_processed,  reduction = "umap", group.by = "Condition") +
+    labs(title = "UMAP: Normal vs Tumor (Condition)")
+
+ggsave(  filename = file.path(  phase1Dir, paste0(study_id, "_UMAP_basedon_condition.png") ),
+    plot = umap_condition, width = 8, height = 6, bg = "white")
+
+##Inspecting the object first and then saving it
+merged <- JoinLayers(seurat_phase1_processed)
+sce <- as.SingleCellExperiment(merged, assay = "RNA")
+dim(sce) #17430genes x 57420cells
+assayNames(sce)
+reducedDimNames(sce) # "PCA" "UMAP"
+head(colData(sce), 2)
+assay(sce, "counts")[1:5, 1:5]  ##counts contains raw expression values
+assay(sce, "logcounts")[1:5, 1:5] ##logcounts contains normalized/log-transformed expression
+ 
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+h5seurat_name <- "GSE245601_seurat_phase1_normal_vs_tumor.h5seurat"
+h5ad_name <- "GSE245601_seurat_phase1_normal_vs_tumor.h5ad"
+SaveH5Seurat( object = seurat_phase1_processed, filename = file.path(phase1Dir, h5seurat_name), overwrite = TRUE,  version = "3")
+writeH5AD( sce, file = file.path(phase1Dir, h5ad_name), X_name = "counts")
+```
+<img width="861" height="647" alt="image" src="https://github.com/user-attachments/assets/307d25e2-2799-41d9-87a1-ba1dfa24dfbd" />
+
+The UMAP shows the transcriptional distribution of cells across the two experimental conditions: Normal and Tumor. Each point represents a cell, with cells positioned according to similarities in their gene-expression profiles. Cells from the Normal and Tumor conditions were visualized using the Condition metadata variable. The distribution of the two conditions across the UMAP was examined to identify regions showing condition-specific enrichment as well as regions where Normal and Tumor cells overlap. This visualization provides an initial assessment of condition-associated transcriptional structure and helps determine whether Normal and Tumor cells occupy distinct or shared transcriptional states. Further biological interpretation requires examination of cell-type composition, marker expression, clustering, and differential expression analysis.      
+
+
 
 
 
