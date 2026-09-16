@@ -1199,7 +1199,14 @@ writeH5AD( sce, file = file.path(phase1Dir, h5ad_name), X_name = "counts")
 ```
 <img width="861" height="647" alt="image" src="https://github.com/user-attachments/assets/307d25e2-2799-41d9-87a1-ba1dfa24dfbd" />
 
+<img width="1336" height="452" alt="image" src="https://github.com/user-attachments/assets/6f4bb61c-3922-4fa1-9d1c-b315df1cbf80" />
+
 The UMAP shows the transcriptional distribution of cells across the two experimental conditions: Normal and Tumor. Each point represents a cell, with cells positioned according to similarities in their gene-expression profiles. Cells from the Normal and Tumor conditions were visualized using the Condition metadata variable. The distribution of the two conditions across the UMAP was examined to identify regions showing condition-specific enrichment as well as regions where Normal and Tumor cells overlap. This visualization provides an initial assessment of condition-associated transcriptional structure and helps determine whether Normal and Tumor cells occupy distinct or shared transcriptional states. Further biological interpretation requires examination of cell-type composition, marker expression, clustering, and differential expression analysis.      
+The same UMAP generated from the PCA-based clustering was visualized by Condition instead of cluster identity. The original UMAP contains the same 24 transcriptional clusters; only the coloring has been changed to show the two conditions, Normal and Tumor. This allows visualization of how the two conditions are distributed across the existing transcriptional clusters.  
+
+The processed Phase 1 Seurat object was saved in two formats for reproducibility and downstream analysis. The processed Seurat object was saved in H5Seurat format. This preserves the Seurat-based analysis object and provides a convenient disk-based format for storing the processed single-cell dataset. The processed data were also converted to SingleCellExperiment and exported as H5AD. H5AD is commonly used by Python-based single-cell analysis frameworks such as Scanpy, allowing the processed dataset to be used outside the Seurat/R workflow. The H5AD export was configured with the raw expression matrix as the primary counts assay.    
+
+
 
 
 
