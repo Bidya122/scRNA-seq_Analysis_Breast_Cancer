@@ -1235,6 +1235,51 @@ table( phase1_sra$Instrument,
 
 SRA metadata was examined to identify potential technical confounding between sequencing instrument and biological condition. In the Phase 1 control samples, after excluding T47D samples, all 5 NextSeq 2000 samples were Tumor, while the NextSeq 500 samples included 2 Normal and 5 Tumor samples. Thus, sequencing instrument was partially confounded with biological condition in this dataset. This was considered when interpreting sample-level structure and the subsequent Harmony integration. 
 
+```bash
+seurat_phase1_processed <- readRDS(  file.path( phase1Dir, "GSE245601_seurat_phase1_PCA_clusters_UMAP.rds" ))
+
+# Run Harmony to integrate data across batches (here, "Sample" is the batch variable)
+# Harmony adjusts PCA embeddings to remove batch effects while preserving biological variation
+harmony_phase1_processed <- RunHarmony(seurat_phase1_processed, c("GSM"), plot_convergence = TRUE)
+
+# Compute UMAP based on Harmony-corrected embeddings (low-dimensional visualization)
+# Using the first 50 Harmony dimensions
+harmony_phase1_processed <- RunUMAP(harmony_phase1_processed, reduction = "harmony", dims = 1:50)
+
+# Construct a nearest-neighbor graph from Harmony embeddings for clustering
+harmony_phase1_processed <- FindNeighbors(harmony_phase1_processed, reduction = "harmony", dims = 1:50, graph.name = "harmony_nn")
+
+# Perform graph-based clustering on the Harmony-corrected neighbor graph
+# The resolution parameter controls the number of clusters (higher = more clusters)
+harmony_phase1_processed <- FindClusters(harmony_phase1_processed, graph.name = "harmony_nn", resolution = 0.8, group.name = "Harmony_clusters")
+length(unique(harmony_phase1_processed$seurat_clusters))
+
+#found 25 clusters
+
+saveRDS(harmony_phase1_processed, file = paste0(phase1Dir,"GSE245601_harmony_phase1_corrected.rds"))
+harmony_phase1_processed <- readRDS(file = paste0(phase1Dir, "GSE245601_harmony_phase1_corrected.rds"))
+
+merged1 = JoinLayers(harmony_phase1_processed) 
+sce_phase1_harmony <- as.SingleCellExperiment(merged1, assay = "RNA")
+
+dim(sce_phase1_harmony)
+assayNames(sce_phase1_harmony)
+reducedDimNames(sce_phase1_harmony)
+head(colData(sce_phase1_harmony),2)
+
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+h5seurat_name1 <- "GSE245601_harmony_phase1_corrected.h5seurat"
+h5ad_name1 <- "GSE245601_harmony_phase1_corrected.h5ad"
+
+SaveH5Seurat(
+  object = harmony_phase1_processed,
+  filename = file.path(phase1Dir, h5seurat_name1),
+  overwrite = TRUE,
+  version = "3"
+)
+
+writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
+```
 
 
 
