@@ -1236,7 +1236,7 @@ table( phase1_sra$Instrument,
 SRA metadata was examined to identify potential technical confounding between sequencing instrument and biological condition. In the Phase 1 control samples, after excluding T47D samples, all 5 NextSeq 2000 samples were Tumor, while the NextSeq 500 samples included 2 Normal and 5 Tumor samples. Thus, sequencing instrument was partially confounded with biological condition in this dataset. This was considered when interpreting sample-level structure and the subsequent Harmony integration. 
 
 ```bash
-seurat_phase1_processed <- readRDS(  file.path( phase1Dir, "GSE245601_seurat_phase1_PCA_clusters_UMAP.rds" ))
+seurat_phase1_processed <- readRDS( file.path( phase1Dir, "GSE245601_seurat_phase1_PCA_clusters_UMAP.rds" ))
 
 # Run Harmony to integrate data across batches (here, "Sample" is the batch variable)
 # Harmony adjusts PCA embeddings to remove batch effects while preserving biological variation
@@ -1280,6 +1280,18 @@ SaveH5Seurat(
 
 writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
 ```
+<img width="832" height="695" alt="image" src="https://github.com/user-attachments/assets/c1c5366f-35d1-4501-a104-51b47341d7d9" />
+
+<img width="1180" height="427" alt="image" src="https://github.com/user-attachments/assets/4e18e7a7-3364-4f99-a81f-d0893528327b" />
+
+<img width="1147" height="80" alt="image" src="https://github.com/user-attachments/assets/2daa7120-c649-49ae-afb0-af5e7016c879" />
+
+<img width="1202" height="297" alt="image" src="https://github.com/user-attachments/assets/4d342c58-97cd-4e12-b74d-787254f41245" />
+
+
+
+
+
 
 
 
