@@ -1206,6 +1206,37 @@ The same UMAP generated from the PCA-based clustering was visualized by Conditio
 
 The processed Phase 1 Seurat object was saved in two formats for reproducibility and downstream analysis. The processed Seurat object was saved in H5Seurat format. This preserves the Seurat-based analysis object and provides a convenient disk-based format for storing the processed single-cell dataset. The processed data were also converted to SingleCellExperiment and exported as H5AD. H5AD is commonly used by Python-based single-cell analysis frameworks such as Scanpy, allowing the processed dataset to be used outside the Seurat/R workflow. The H5AD export was configured with the raw expression matrix as the primary counts assay.    
 
+## 7. Run Harmony & Perform Clustering on Harmony integrated data
+
+```bash
+## Visualize the existing PCA-based UMAP by biological condition and by individual sample before Harmony integration.
+## This helps assess the distribution of Normal/Tumor cells and identify sample-specific structure before batch correction.
+p1 <- DimPlot( seurat_phase1_processed,  group.by = "orig.ident",  shuffle = TRUE,  pt.size = 0.5) + 
+  labs(title = "UMAP: Sample Distribution (GSM)")
+ggsave(file.path(phase1Dir, "before_harmony.png"), plot = p1, width = 15, height = 10, dpi = 300)
+```
+<img width="967" height="642" alt="image" src="https://github.com/user-attachments/assets/343b3a27-50b7-47d0-ad1f-d1aaf86d2177" />
+
+Before Harmony integration, the PCA-based UMAP was visualized by clusters, biological condition (Normal vs Tumor), and individual GSM/sample. These plots provide a baseline view of the cellular structure, biological condition, and sample-level distribution before integration, helping assess whether cells show distinct clustering, Normal/Tumor separation, or sample-specific structure. ells from most samples were distributed across multiple clusters, with only a few clusters showing more noticeable sample-specific enrichment. These plots provide a baseline for evaluating cellular structure, biological condition, and sample-level distribution before Harmony integration.
+
+```bash
+sra_metadata <- read.csv( "D:/Bidya Work/single/GSE245601_Breast_Cancer/SraRunTable.csv",
+  stringsAsFactors = FALSE,
+  check.names = FALSE)
+colnames(sra_metadata)
+table( sra_metadata$Instrument, sra_metadata$is_tumor)
+sra_control <- sra_metadata[grepl("_Control$", sra_metadata$`Sample Name`),]
+sra_control[, c( "Sample Name", "Instrument", "is_tumor", "submitted_subject_id")]
+phase1_sra <- subset( sra_metadata, grepl("_Control$", `Sample Name`) & !grepl("^T47D_", `Sample Name`))
+table( phase1_sra$Instrument,
+  ifelse( grepl("^Normal_", phase1_sra$`Sample Name`), "Normal", "Tumor"))
+```
+<img width="1340" height="390" alt="image" src="https://github.com/user-attachments/assets/b864a1b1-d727-4e99-b0af-0229a88974dd" />
+
+SRA metadata was examined to identify potential technical confounding between sequencing instrument and biological condition. In the Phase 1 control samples, after excluding T47D samples, all 5 NextSeq 2000 samples were Tumor, while the NextSeq 500 samples included 2 Normal and 5 Tumor samples. Thus, sequencing instrument was partially confounded with biological condition in this dataset. This was considered when interpreting sample-level structure and the subsequent Harmony integration. 
+
+
+
 
 
 
