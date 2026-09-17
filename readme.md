@@ -1292,6 +1292,19 @@ writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
 
 Harmony integration was performed using GSM/sample identity to account for sample-level variation. A Harmony-based UMAP was generated using the first 50 Harmony dimensions, followed by construction of a nearest-neighbor graph and graph-based clustering at a resolution of 0.8. This resulted in 25 clusters. The integrated object was then saved and exported in both H5Seurat and H5AD formats for downstream analysis.    
 
+```bash
+
+
+```
+<img width="1738" height="588" alt="image" src="https://github.com/user-attachments/assets/a2a9d8d5-0a27-4c85-a7db-1b16eb5daa12" />
+The Harmony-based UMAP was visualized by individual GSM/sample to assess changes in sample-level structure after integration. Compared with the pre-Harmony UMAP, the post-Harmony embedding showed greater mixing of samples across the clusters, with the previously observed sample-enriched regions becoming less apparent. This indicates reduced sample-specific structure following Harmony integration.    
+
+<img width="1817" height="640" alt="image" src="https://github.com/user-attachments/assets/46e7e76b-f525-4319-b29a-9273ecf0dd38" />
+Graph-based clustering was performed using the PCA-derived neighborhood graph, resulting in 25 clusters at the selected resolution. The PCA-based UMAP showed distinct groups corresponding to the identified clusters, providing an initial view of the cellular structure before Harmony integration. These clusters were subsequently compared with the Harmony-based clustering results to assess changes in cluster structure after sample-level integration.    
+
+
+
+
 
 
 
