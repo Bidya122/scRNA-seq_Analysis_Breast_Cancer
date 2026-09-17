@@ -1302,6 +1302,9 @@ The Harmony-based UMAP was visualized by individual GSM/sample to assess changes
 <img width="1817" height="640" alt="image" src="https://github.com/user-attachments/assets/46e7e76b-f525-4319-b29a-9273ecf0dd38" />
 Graph-based clustering was performed using the PCA-derived neighborhood graph, resulting in 25 clusters at the selected resolution. The PCA-based UMAP showed distinct groups corresponding to the identified clusters, providing an initial view of the cellular structure before Harmony integration. These clusters were subsequently compared with the Harmony-based clustering results to assess changes in cluster structure after sample-level integration.    
 
+<img width="1791" height="627" alt="image" src="https://github.com/user-attachments/assets/d0500708-9348-43fb-a7b7-a10c2d4d03f4" />
+The Harmony-based UMAP was visualized by biological condition (Normal vs Tumor) to assess whether condition-associated structure remained interpretable after sample-level integration. Compared with the pre-Harmony embedding, the post-Harmony UMAP showed somewhat greater mixing of Normal and Tumor cells across the embedding, while condition-associated structure remained visible. This indicates that Harmony altered sample-level structure without completely eliminating the observed biological variation between conditions.
+
 
 
 
