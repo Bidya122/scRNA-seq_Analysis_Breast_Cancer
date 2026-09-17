@@ -1288,6 +1288,11 @@ writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
 
 <img width="1202" height="297" alt="image" src="https://github.com/user-attachments/assets/4d342c58-97cd-4e12-b74d-787254f41245" />
 
+<img width="1501" height="287" alt="image" src="https://github.com/user-attachments/assets/4f7d2ec0-fcc5-4fae-9f9a-6b89d10f7c5f" />
+
+Harmony integration was performed using GSM/sample identity to account for sample-level variation. A Harmony-based UMAP was generated using the first 50 Harmony dimensions, followed by construction of a nearest-neighbor graph and graph-based clustering at a resolution of 0.8. This resulted in 25 clusters. The integrated object was then saved and exported in both H5Seurat and H5AD formats for downstream analysis.    
+
+
 
 
 
