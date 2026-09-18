@@ -1321,6 +1321,102 @@ Graph-based clustering was performed using the PCA-derived neighborhood graph, r
 <img width="1791" height="627" alt="image" src="https://github.com/user-attachments/assets/d0500708-9348-43fb-a7b7-a10c2d4d03f4" />
 The Harmony-based UMAP was visualized by biological condition (Normal vs Tumor) to assess whether condition-associated structure remained interpretable after sample-level integration. Compared with the pre-Harmony embedding, the post-Harmony UMAP showed somewhat greater mixing of Normal and Tumor cells across the embedding, while condition-associated structure remained visible. This indicates that Harmony altered sample-level structure without completely eliminating the observed biological variation between conditions.
 
+## 8. KNN-Based Batch Mixing Function
+
+```bash
+library(ggplot2)
+library(FNN)
+
+# Computes the mean fraction of k-nearest neighbors
+# that belong to the same batch/sample
+
+compute_knn_batch_mixing <- function( seu, batch_var, reduction = "pca", dims = 1:50, k = 20){
+  
+  # Check whether the batch metadata column exists
+  if (!batch_var %in% colnames(seu@meta.data)) {
+    stop( paste0( "Metadata column '",  batch_var, "' not found in seu@meta.data") )
+  }
+  
+  # Check whether the requested dimensional reduction exists
+  if (!reduction %in% Reductions(seu)) { stop( paste0( "Reduction '", reduction,
+        "' not found in the Seurat object."))
+  }
+  
+  # Extract the selected dimensions
+  emb <- Embeddings( seu, reduction = reduction )[, dims, drop = FALSE]
+  
+  # Find k nearest neighbors
+  nn <- FNN::get.knn(  emb, k = k )$nn.index
+  
+  # Extract batch/sample labels
+  labs <- seu@meta.data[[batch_var]]
+  
+  # Calculate the fraction of neighbors
+  # belonging to the same batch as each cell
+  same <- vapply( seq_len(nrow(nn)),
+    function(i) { mean( labs[nn[i, ]] == labs[i], na.rm = TRUE) },
+    numeric(1))
+  
+  # Store cell-level results
+  df <- data.frame( batch = labs, frac_same_batch = same)
+  
+  # Calculate mean same-batch fraction for each batch
+  aggregate( frac_same_batch ~ batch, data = df, FUN = mean)
+}
+
+```
+UMAP was used as a qualitative and visual assessment of sample-level structure before and after Harmony integration. To complement this visualization, a quantitative K-nearest-neighbor (KNN) analysis was performed to measure sample mixing in the low-dimensional space. For each cell, the 20 nearest neighbors were identified using the PCA embedding before Harmony and the Harmony embedding after integration. The fraction of neighbors belonging to the same GSM was calculated for each cell and summarized by sample. A higher same-GSM neighbor fraction indicates stronger local sample-specific structure, whereas a lower fraction indicates greater mixing between samples. 
+
+```bash
+batch_column <- "GSM"
+
+# Before Harmony
+mix_df <- compute_knn_batch_mixing(
+  seu       = seurat_phase1_processed,
+  batch_var = batch_column,
+  reduction = "pca",
+  dims      = 1:50,
+  k         = 20)
+
+# After Harmony
+mix_df_harmony <- compute_knn_batch_mixing(
+  seu       = harmony_phase1_processed,
+  batch_var = batch_column,
+  reduction = "harmony",
+  dims      = 1:50,
+  k         = 20)
+
+
+# Add Before/Harmony labels and combine
+mix_df_combined <- rbind( transform( mix_df, Status = "Before" ),
+  transform( mix_df_harmony, Status = "Harmony"))
+mix_df_combined$Condition <- seurat_phase1_processed$Condition[ match(
+    mix_df_combined$batch, seurat_phase1_processed$GSM )]
+unique( mix_df_combined[, c("batch", "Condition")])
+# Plot
+batch_cor_plot <- ggplot( mix_df_combined, aes( x = batch, y = frac_same_batch, fill = Status )) +
+  geom_col( position = position_dodge(width = 0.8), width = 0.7 ) +
+  labs( title = "KNN-Based Sample Mixing Before and After Harmony",
+    x = "orig.ident",
+    y = "Mean same-GSM neighbor fraction") +
+  theme_minimal( base_size = 15 ) +
+  theme( axis.text.x = element_text( angle = 45,  hjust = 1),
+    legend.title = element_blank(),
+    plot.title = element_text( face = "bold", hjust = 0.5 ))
+
+batch_cor_plot
+
+# Save plot
+ggsave( filename = file.path( phase1Dir, "GSE245601_KNN_batch_mixing_before_after_Harmony.png" ),
+  plot = batch_cor_plot, width = 23, height = 8, dpi = 600)
+```
+The analysis was performed using GSM as the sample/batch identifier, with the first 50 PCA dimensions used before Harmony and the first 50 Harmony dimensions used after integration. The resulting same-GSM neighbor fractions were compared between the pre-Harmony and post-Harmony embeddings. The KNN analysis showed a reduction in the same-GSM neighbor fraction across the analyzed samples after Harmony integration, providing quantitative support for the increased sample mixing observed in the post-Harmony UMAP. The magnitude of this reduction varied between samples, indicating that the degree of sample mixing was not uniform across the dataset. 
+Together, the UMAP visualization and KNN-based analysis provide complementary assessments of integration: UMAP provides a qualitative visual assessment of sample distribution, while KNN provides a quantitative, statistics-based measurement of local sample mixing.    
+
+<img width="1402" height="501" alt="image" src="https://github.com/user-attachments/assets/6c126b15-e4fa-4811-bc8b-84b12d60a3e5" />
+We wanted to make sure that the clusters were not being formed mainly due to technical differences between the GSM samples. Therefore, we assessed how well cells from different samples mixed after Harmony correction. Sample mixing was first visualized using UMAP to check whether cells from different GSMs were distributed across the same clusters.   
+To support the visual observation, we also performed KNN-based sample mixing analysis. This measured how frequently cells from different GSM samples occurred within the local neighbourhood of each cell. Thus, UMAP was used for visual assessment, while KNN provided a quantitative and statistical assessment of sample mixing. Good sample mixing suggests that the clustering was not primarily driven by GSM-specific technical variation.    
+
 
 
 
