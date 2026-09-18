@@ -1293,7 +1293,20 @@ writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
 Harmony integration was performed using GSM/sample identity to account for sample-level variation. A Harmony-based UMAP was generated using the first 50 Harmony dimensions, followed by construction of a nearest-neighbor graph and graph-based clustering at a resolution of 0.8. This resulted in 25 clusters. The integrated object was then saved and exported in both H5Seurat and H5AD formats for downstream analysis.    
 
 ```bash
+p2 <- DimPlot( harmony_phase1_processed, group.by = "orig.ident", shuffle = TRUE, pt.size = 0.5) + 
+  labs(title = "HarmonyUMAP: Sample Distribution (GSM)")
 
+ggsave(file.path(phase1Dir, "after_harmony.png"), plot = p2, width = 15, height = 10, dpi = 600)
+
+p3 <- DimPlot( harmony_phase1_processed, group.by = "seurat_clusters", shuffle = FALSE, label = TRUE, pt.size = 0.5) +
+  labs(title = "Harmony UMAP: Clusters")
+
+ggsave( file.path(phase1Dir, "harmony_clusters.png"), plot = p3, width = 15, height = 10, dpi = 600)
+
+p4 <- DimPlot( harmony_phase1_processed, group.by = "Condition", shuffle = TRUE, pt.size = 0.5) +
+  labs(title = "Harmony UMAP: Normal vs Tumor")
+
+ggsave( file.path(phase1Dir, "harmony_condition.png"), plot = p4,  width = 15, height = 10, dpi = 600)
 
 ```
 <img width="1738" height="588" alt="image" src="https://github.com/user-attachments/assets/a2a9d8d5-0a27-4c85-a7db-1b16eb5daa12" />
