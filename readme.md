@@ -953,6 +953,9 @@ The Seurat object was then subsetted to the 17,706 protein-coding genes while re
 
 The first phase of this analysis focuses on characterizing transcriptomic differences between normal breast tissue and primary breast tumor tissue at single-cell resolution. To establish a baseline comparison without introducing treatment-related effects, only Control samples were included in this phase. Tamoxifen-treated samples and the T47D cell-line samples were excluded. The analysis includes: 2 normal control samples: Normal_01_Control and Normal_02_Control and 10 primary tumor control samples: Tumor_01_Control through Tumor_10_Control. This resulted in 57,420 cells across 12 control samples after quality control and protein-coding gene filtering. 
 
+[Get the Phase1 Script](https://github.com/Bidya122/scRNA-seq_Analysis_Breast_Cancer/blob/main/02_GSE245601_Breast_Cancer_Phase1.Rmd)
+
+
 ## 1. Dataset Check before the Downstream Analysis
 
 ```bash
