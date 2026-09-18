@@ -1420,7 +1420,14 @@ Together, the UMAP visualization and KNN-based analysis provide complementary as
 We wanted to make sure that the clusters were not being formed mainly due to technical differences between the GSM samples. Therefore, we assessed how well cells from different samples mixed after Harmony correction. Sample mixing was first visualized using UMAP to check whether cells from different GSMs were distributed across the same clusters.   
 To support the visual observation, we also performed KNN-based sample mixing analysis. This measured how frequently cells from different GSM samples occurred within the local neighbourhood of each cell. Thus, UMAP was used for visual assessment, while KNN provided a quantitative and statistical assessment of sample mixing. Good sample mixing suggests that the clustering was not primarily driven by GSM-specific technical variation.    
 
+## 9. Cell-Type Annotation
 
+After Harmony correction and KNN-based sample-mixing assessment in R, the processed dataset was moved to Python for cell-type annotation. CellTypist was used with the Cells_Adult_Breast.pkl model, which contains reference cell types from adult human breast tissue.
+Workflow
+AnnData → Harmony-based neighbors → Over-clustering → CellTypist → Majority voting
+
+The resulting cell-type annotations will be used for Normal vs Tumor cell-composition and downstream biological analysis. 
+(Download the Python Script Here.)[] 
 
 
 
