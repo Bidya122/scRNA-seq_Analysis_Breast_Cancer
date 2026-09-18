@@ -1,0 +1,425 @@
+---
+title: "2_scRNA_BreastCancer_Phase1"
+author: "Bidya_Mohanty"
+date: "2026-09-12"
+output: html_document
+---
+
+```{r Loading Libraries}
+library(uwot)
+library(Seurat)
+library(SeuratDisk)
+library(dplyr)
+library(R.utils)  
+library(ggplot2)
+library(ggExtra)
+library(RColorBrewer)
+library(openxlsx)
+library(dplyr)
+library(scales)
+library(HGNChelper)
+library(dittoSeq)
+library(harmony)
+library(batchelor)
+library(zellkonverter)
+library(SingleCellExperiment)
+library(scDblFinder)
+library(rtracklayer)
+```
+
+```{r Directory Setup}
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
+outputDir<- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Output"
+plotDir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Plots"
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+dir.create(phase1Dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r Dataset Load}
+seurat_protein_coding <- readRDS( file.path(phase1Dir, "GSE245601_seurat_protein_coding.rds")) #Load the RDS file 
+dim(seurat_protein_coding) #17706 genes 106334 cells
+head(seurat_protein_coding@meta.data)
+unique(seurat_protein_coding$Title)
+seurat_protein_coding$Condition <- ifelse( grepl("Normal_", seurat_protein_coding$Title),"Normal",
+  ifelse(  grepl("Tumor_", seurat_protein_coding$Title), "Tumor", "T47D"))
+table(seurat_protein_coding$Condition) #Normal: 21,385 cells; Tumor: 82,968 cells; T47D: 1,981 cells. Total = 106,334 cells.
+
+#Create Phase1 Object
+seurat_phase1 <- subset(seurat_protein_coding,
+  subset = grepl("Normal_0[12]_Control", Title) |
+           grepl("Tumor_.*_Control", Title))
+dim(seurat_phase1) # 17430 genes 57420 cells
+table(seurat_phase1$Condition) #Normal 13767 Tumor  43653 
+sample_info <- unique( seurat_phase1@meta.data[, c("GSM", "Title")])
+sample_info #12 Samples
+unique(seurat_phase1$Title)
+
+saveRDS( seurat_phase1, file.path( phase1Dir, "GSE245601_seurat_phase1_normal_vs_tumor_control.rds" ))
+```
+
+``` {r Quality Check Before Downstream Analysis}
+study_id <- "GSE245601"
+
+save_violin_plots_separate <- function( seurat_obj, phase1Dir, study_id,
+                                       features = c( "nCount_RNA",  "nFeature_RNA", "percent.mt", "percent.rb" )) {
+  
+  # Ensure output directory exists
+  if (!dir.exists(phase1Dir)) {
+    dir.create(phase1Dir, recursive = TRUE)}
+  
+  # Extract metadata
+  meta <- seurat_obj@meta.data
+  
+  # Create sample identity for x-axis
+  meta$sample <- as.factor(meta$orig.ident)
+  
+  # Generate one plot for each QC metric
+  for (feat in features) {
+    
+    if (!feat %in% colnames(meta)) {
+      warning(paste("Skipping", feat, "- not found in metadata"))
+      next
+    }
+    
+    p <- ggplot( meta,
+      aes(x = sample, y = .data[[feat]]) ) +
+      geom_violin(  trim = TRUE, fill = "red", alpha = 0.7 ) +
+      geom_boxplot( width = 0.1, outlier.shape = NA, alpha = 0.6 ) +
+      labs( title = feat, x = "Sample", y = feat ) +
+      theme_bw(base_size = 14) +
+      theme( axis.text.x = element_text( angle = 45, hjust = 1 ),
+        plot.title = element_text(hjust = 0.5))
+    
+    ggsave( filename = file.path( phase1Dir, paste0(  study_id, "_Phase1_check_", feat, "_violin.png" )),
+      plot = p, width = 16, height = 9,  dpi = 400, bg = "white"  )
+  }
+}
+
+save_violin_plots_separate( seurat_phase1, phase1Dir, study_id)
+
+```
+
+```{r Checking the cells above 25k}
+sum(seurat_phase1$nCount_RNA > 25000)
+
+seurat_phase1@meta.data %>%
+    dplyr::filter(nCount_RNA > 25000) %>%
+    dplyr::summarise(
+        n_cells = dplyr::n(),
+        median_nFeature = median(nFeature_RNA),
+        median_nCount = median(nCount_RNA),
+        median_mt = median(percent.mt),
+        median_rb = median(percent.rb)
+    )
+
+seurat_phase1@meta.data %>%
+    dplyr::filter(nCount_RNA > 25000) %>%
+    dplyr::count(orig.ident, name = "cells_above_25k") %>%
+    dplyr::arrange(desc(cells_above_25k))
+
+```
+
+```{r Standard workflow for normalization and scaling}
+seurat_phase1 <- readRDS( file.path( phase1Dir, "GSE245601_seurat_phase1_normal_vs_tumor_control.rds" ))
+# Normalize gene expression values for each cell using LogNormalize.
+# Expression counts are normalized by the total RNA count per cell, multiplied by a scale factor of 10,000, and log-transformed.
+cat("Normalizing data using LogNormalize method (scale factor = 10,000)...\n")
+seurat_phase1_processed <- NormalizeData(  seurat_phase1, normalization.method = "LogNormalize",  scale.factor = 10000)
+
+# Identify highly variable genes using the VST method.
+# These genes are used to capture major sources of variationin downstream dimensionality reduction.
+seurat_phase1_processed <- FindVariableFeatures( seurat_phase1_processed, selection.method = "vst",  nfeatures = 2500) 
+#2,500 is a conventional/default-type choice in many Seurat workflows, not a magical biological cutoff.
+
+# Center and scale the expression values of the selected features. This gives each gene approximately mean = 0 and SD = 1 before PCA.
+seurat_phase1_processed <- ScaleData(seurat_phase1_processed)
+
+# Perform PCA using the scaled highly variable genes. Up to 100 PCs are calculated for subsequent dimensionality assessment.
+seurat_phase1_processed <- RunPCA( seurat_phase1_processed, npcs = 100)
+
+```
+``` {r Principal Component Selection and Variance Analysis_Elbow Plot}
+study_id <- "GSE245601"
+# Get the standard deviation for each PC and calculate the variance explained.
+stdev <- seurat_phase1_processed[["pca"]]@stdev
+
+# Calculate the proportion of variance explained by each PC.
+var_explained <- stdev^2 / sum(stdev^2)
+
+# Calculate cumulative variance explained across PCs.
+cum_var <- cumsum(var_explained)
+
+# Store PCA variance metrics in a data frame.
+pca_var_df <- data.frame( PC = 1:length(stdev), Variance = var_explained, CumulativeVariance = cum_var)
+pca_var_df
+
+# Identify the number of PCs required to explain at least 95% of the variance.
+num_PCs_95 <- min(which(cum_var >= 0.95))
+num_PCs_95
+
+# Generate the PCA Elbow Plot.
+elbow_plot <- ElbowPlot( seurat_phase1_processed, ndims = 100,  reduction = "pca") +
+    labs(title = "PCA Elbow Plot for Dimensionality Selection")
+
+ggsave( file.path(phase1Dir, paste0(study_id, "_ElbowPlot.png")),
+    elbow_plot, width = 8, height = 6, bg = "white")
+
+```
+
+```{r Total variance explained across the top 35 PCs}
+pca_stdev <- seurat_phase1_processed[["pca"]]@stdev  # Extract the standard deviation for each principal component (PC) from the PCA reduction object.
+pca_var_explained <- (pca_stdev^2) / sum(pca_stdev^2) * 100  # Calculate the percentage of variance explained by each PC. Variance explained is computed as the squared standard deviation and divided by the total variance, multiplied by 100.
+total_var<- sum(pca_var_explained[1:35])  # Compute the total variance explained by the top 35 PCs. This helps quantify how much biological variation is retained when using 35 dimensions for downstream analyses.
+
+cat("Total variance explained by top PCs:", round(total_var, 2), "%\n")   # Print the total variance explained by the top PCs.
+##60–85% variance explained is very typical
+##100% is neither possible nor desirable (that would mean you kept all the noise)
+##80% is a healthy balance between signal retention and noise reduction
+
+```
+```{r Perform UMAP & Clustering on unintegrated data}
+library(glue)
+study_id <- "GSE245601"
+
+# Run UMAP using the first 35 PCs selected during PCA assessment.
+# UMAP provides a 2D representation of the high-dimensional PCA space while preserving local cell-neighborhood relationships.
+seurat_phase1_processed <- RunUMAP(  seurat_phase1_processed, dims = 1:35)
+
+# Construct a nearest-neighbor graph using the first 35 PCA dimensions.
+# This graph represents similarity between cells and is used for clustering.
+seurat_phase1_processed <- FindNeighbors( seurat_phase1_processed,  dims = 1:35, reduction = "pca", graph.name = "pca_nn")
+
+# Perform graph-based clustering.
+# Resolution = 0.8 controls cluster granularity.
+seurat_phase1_processed <- FindClusters(  seurat_phase1_processed, resolution = 0.8, graph.name = "pca_nn", cluster.name = "pca_clusters")
+
+# Count the number of identified clusters.
+n_clusters <- length(unique(seurat_phase1_processed$pca_clusters))
+
+cat(glue( "Clustering complete. Number of clusters: {n_clusters}\n"))
+
+# Display the number of cells in each cluster.
+table(seurat_phase1_processed$pca_clusters)
+
+# UMAP colored by PCA-based clusters, shows the cell types, so cells that are similar stay close together in 2D. Each cluster (represented by a color) groups cells with similar overall gene expression patterns.
+
+umap_clusters <- DimPlot( seurat_phase1_processed, reduction = "umap",  group.by = "pca_clusters", label = TRUE) +
+  labs(title = "UMAP: PCA-Based Clusters")
+
+ggsave(filename = file.path(phase1Dir, paste0(study_id, "_UMAP_pca_clusters.png")), plot = umap_clusters,  width = 8,  height = 6,  bg = "white")
+
+```
+
+
+``` {r clustering by condition and Unintegrated Seurat Object saved}
+head(seurat_phase1_processed@meta.data, 3)
+colnames(seurat_phase1_processed@meta.data)
+table(seurat_phase1_processed$Condition)
+umap_condition <- DimPlot(  seurat_phase1_processed,  reduction = "umap", group.by = "Condition") +
+    labs(title = "UMAP: Normal vs Tumor (Condition)")
+
+ggsave(  filename = file.path(  phase1Dir, paste0(study_id, "_UMAP_basedon_condition.png") ),
+    plot = umap_condition, width = 8, height = 6, bg = "white")
+
+##Inspecting the object first and then saving it
+merged <- JoinLayers(seurat_phase1_processed)
+sce <- as.SingleCellExperiment(merged, assay = "RNA")
+dim(sce) #17430genes x 57420cells
+assayNames(sce)
+reducedDimNames(sce) # "PCA" "UMAP"
+head(colData(sce), 2)
+assay(sce, "counts")[1:5, 1:5]  ##counts contains raw expression values
+assay(sce, "logcounts")[1:5, 1:5] ##logcounts contains normalized/log-transformed expression
+ 
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+h5seurat_name <- "GSE245601_seurat_phase1_normal_vs_tumor.h5seurat"
+h5ad_name <- "GSE245601_seurat_phase1_normal_vs_tumor.h5ad"
+SaveH5Seurat( object = seurat_phase1_processed, filename = file.path(phase1Dir, h5seurat_name), overwrite = TRUE,  version = "3")
+writeH5AD( sce, file = file.path(phase1Dir, h5ad_name), X_name = "counts")  
+
+saveRDS(
+  seurat_phase1_processed,
+  file = file.path(
+    phase1Dir,
+    "GSE245601_seurat_phase1_PCA_clusters_UMAP.rds"
+  ))
+```
+
+``` {r Run Harmony & Perform Clustering on Harmony integrated data}
+## Visualize the existing PCA-based UMAP by biological condition and by individual sample before Harmony integration.
+## This helps assess the distribution of Normal/Tumor cells and identify sample-specific structure before batch correction.
+p1 <- DimPlot( seurat_phase1_processed,  group.by = "orig.ident",  shuffle = TRUE,  pt.size = 0.5) + 
+  labs(title = "UMAP: Sample Distribution (GSM)")
+ggsave(file.path(phase1Dir, "before_harmony.png"), plot = p1, width = 15, height = 10, dpi = 300)
+
+#-------------HARMONY------------------------
+
+sra_metadata <- read.csv( "D:/Bidya Work/single/GSE245601_Breast_Cancer/SraRunTable.csv", stringsAsFactors = FALSE,  check.names = FALSE)
+colnames(sra_metadata)
+table( sra_metadata$Instrument, sra_metadata$is_tumor)
+sra_control <- sra_metadata[grepl("_Control$", sra_metadata$`Sample Name`),]
+sra_control[, c( "Sample Name", "Instrument", "is_tumor", "submitted_subject_id")]
+phase1_sra <- subset( sra_metadata, grepl("_Control$", `Sample Name`) & !grepl("^T47D_", `Sample Name`))
+table( phase1_sra$Instrument,
+  ifelse( grepl("^Normal_", phase1_sra$`Sample Name`), "Normal", "Tumor"))
+
+
+seurat_phase1_processed <- readRDS(  file.path( phase1Dir, "GSE245601_seurat_phase1_PCA_clusters_UMAP.rds" ))
+
+# Run Harmony to integrate data across batches (here, "Sample" is the batch variable)
+# Harmony adjusts PCA embeddings to remove batch effects while preserving biological variation
+harmony_phase1_processed <- RunHarmony(seurat_phase1_processed, c("GSM"), plot_convergence = TRUE)
+
+# Compute UMAP based on Harmony-corrected embeddings (low-dimensional visualization)
+# Using the first 50 Harmony dimensions
+harmony_phase1_processed <- RunUMAP(harmony_phase1_processed, reduction = "harmony", dims = 1:50)
+
+# Construct a nearest-neighbor graph from Harmony embeddings for clustering
+harmony_phase1_processed <- FindNeighbors(harmony_phase1_processed, reduction = "harmony", dims = 1:50, graph.name = "harmony_nn")
+
+# Perform graph-based clustering on the Harmony-corrected neighbor graph
+# The resolution parameter controls the number of clusters (higher = more clusters)
+harmony_phase1_processed <- FindClusters(harmony_phase1_processed, graph.name = "harmony_nn", resolution = 0.8, group.name = "Harmony_clusters")
+length(unique(harmony_phase1_processed$seurat_clusters))
+
+#found 25 clusters
+
+saveRDS(harmony_phase1_processed, file = paste0(phase1Dir,"GSE245601_harmony_phase1_corrected.rds"))
+harmony_phase1_processed <- readRDS(file = paste0(phase1Dir, "GSE245601_harmony_phase1_corrected.rds"))
+
+merged1 = JoinLayers(harmony_phase1_processed) 
+sce_phase1_harmony <- as.SingleCellExperiment(merged1, assay = "RNA")
+
+dim(sce_phase1_harmony)
+assayNames(sce_phase1_harmony)
+reducedDimNames(sce_phase1_harmony)
+head(colData(sce_phase1_harmony),2)
+
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+h5seurat_name1 <- "GSE245601_harmony_phase1_corrected.h5seurat"
+h5ad_name1 <- "GSE245601_harmony_phase1_corrected.h5ad"
+
+SaveH5Seurat(
+  object = harmony_phase1_processed,
+  filename = file.path(phase1Dir, h5seurat_name1),
+  overwrite = TRUE,
+  version = "3"
+)
+
+writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
+
+```
+
+``` {r Visualising Harmony}
+p2 <- DimPlot( harmony_phase1_processed, group.by = "orig.ident", shuffle = TRUE, pt.size = 0.5) + 
+  labs(title = "HarmonyUMAP: Sample Distribution (GSM)")
+
+ggsave(file.path(phase1Dir, "after_harmony.png"), plot = p2, width = 15, height = 10, dpi = 600)
+
+p3 <- DimPlot( harmony_phase1_processed, group.by = "seurat_clusters", shuffle = FALSE, label = TRUE, pt.size = 0.5) +
+  labs(title = "Harmony UMAP: Clusters")
+
+ggsave( file.path(phase1Dir, "harmony_clusters.png"), plot = p3, width = 15, height = 10, dpi = 600)
+
+p4 <- DimPlot( harmony_phase1_processed, group.by = "Condition", shuffle = TRUE, pt.size = 0.5) +
+  labs(title = "Harmony UMAP: Normal vs Tumor")
+
+ggsave( file.path(phase1Dir, "harmony_condition.png"), plot = p4,  width = 15, height = 10, dpi = 600)
+
+# Extract Harmony UMAP coordinates
+umap_hcoords_phase1 <- Embeddings( harmony_phase1_processed, reduction = "umap")
+
+# Save Harmony UMAP coordinates
+write.csv( umap_hcoords_phase1, file = file.path( phase1Dir, "GSE245601_harmony_phase1_umap_coordinates.csv" ), row.names = TRUE)
+
+```
+
+```{r KNN-Based Batch Mixing Function}
+library(ggplot2)
+library(FNN)
+
+# Computes the mean fraction of k-nearest neighbors
+# that belong to the same batch/sample
+
+compute_knn_batch_mixing <- function( seu, batch_var, reduction = "pca", dims = 1:50, k = 20){
+  
+  # Check whether the batch metadata column exists
+  if (!batch_var %in% colnames(seu@meta.data)) {
+    stop( paste0( "Metadata column '",  batch_var, "' not found in seu@meta.data") )
+  }
+  
+  # Check whether the requested dimensional reduction exists
+  if (!reduction %in% Reductions(seu)) { stop( paste0( "Reduction '", reduction,
+        "' not found in the Seurat object."))
+  }
+  
+  # Extract the selected dimensions
+  emb <- Embeddings( seu, reduction = reduction )[, dims, drop = FALSE]
+  
+  # Find k nearest neighbors
+  nn <- FNN::get.knn(  emb, k = k )$nn.index
+  
+  # Extract batch/sample labels
+  labs <- seu@meta.data[[batch_var]]
+  
+  # Calculate the fraction of neighbors
+  # belonging to the same batch as each cell
+  same <- vapply( seq_len(nrow(nn)),
+    function(i) { mean( labs[nn[i, ]] == labs[i], na.rm = TRUE) },
+    numeric(1))
+  
+  # Store cell-level results
+  df <- data.frame( batch = labs, frac_same_batch = same)
+  
+  # Calculate mean same-batch fraction for each batch
+  aggregate( frac_same_batch ~ batch, data = df, FUN = mean)
+}
+
+
+```
+
+```{r Compute batch mixing before and after Harmony}
+batch_column <- "GSM"
+
+# Before Harmony
+mix_df <- compute_knn_batch_mixing(
+  seu       = seurat_phase1_processed,
+  batch_var = batch_column,
+  reduction = "pca",
+  dims      = 1:50,
+  k         = 20)
+
+# After Harmony
+mix_df_harmony <- compute_knn_batch_mixing(
+  seu       = harmony_phase1_processed,
+  batch_var = batch_column,
+  reduction = "harmony",
+  dims      = 1:50,
+  k         = 20)
+
+
+# Add Before/Harmony labels and combine
+mix_df_combined <- rbind( transform( mix_df, Status = "Before" ),
+  transform( mix_df_harmony, Status = "Harmony"))
+mix_df_combined$Condition <- seurat_phase1_processed$Condition[ match(
+    mix_df_combined$batch, seurat_phase1_processed$GSM )]
+unique( mix_df_combined[, c("batch", "Condition")])
+# Plot
+batch_cor_plot <- ggplot( mix_df_combined, aes( x = batch, y = frac_same_batch, fill = Status )) +
+  geom_col( position = position_dodge(width = 0.8), width = 0.7 ) +
+  labs( title = "KNN-Based Sample Mixing Before and After Harmony",
+    x = "orig.ident",
+    y = "Mean same-GSM neighbor fraction") +
+  theme_minimal( base_size = 15 ) +
+  theme( axis.text.x = element_text( angle = 45,  hjust = 1),
+    legend.title = element_blank(),
+    plot.title = element_text( face = "bold", hjust = 0.5 ))
+
+batch_cor_plot
+
+
+# Save plot
+ggsave( filename = file.path( phase1Dir, "GSE245601_KNN_batch_mixing_before_after_Harmony.png" ),
+  plot = batch_cor_plot, width = 23, height = 8, dpi = 600)
+
+```
