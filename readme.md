@@ -1290,7 +1290,10 @@ writeH5AD( sce_phase1_harmony, file = file.path( phase1Dir,  h5ad_name1 ))
 
 <img width="1501" height="287" alt="image" src="https://github.com/user-attachments/assets/4f7d2ec0-fcc5-4fae-9f9a-6b89d10f7c5f" />
 
-Harmony integration was performed using GSM/sample identity to account for sample-level variation. A Harmony-based UMAP was generated using the first 50 Harmony dimensions, followed by construction of a nearest-neighbor graph and graph-based clustering at a resolution of 0.8. This resulted in 25 clusters. The integrated object was then saved and exported in both H5Seurat and H5AD formats for downstream analysis.    
+<img width="712" height="447" alt="image" src="https://github.com/user-attachments/assets/e86b3bac-d9c2-4f26-ab74-62628c8fdef9" />
+
+
+Harmony integration was performed using GSM/sample identity to account for sample-level variation. Harmony convergence was monitored during integration by plotting the objective function across clustering steps. The objective function decreased across successive iterations and approached a stable value, indicating convergence of the Harmony optimization process. A Harmony-based UMAP was generated using the first 50 Harmony dimensions, followed by construction of a nearest-neighbor graph and graph-based clustering at a resolution of 0.8. This resulted in 25 clusters. The integrated object was then saved and exported in both H5Seurat and H5AD formats for downstream analysis.    
 
 ```bash
 p2 <- DimPlot( harmony_phase1_processed, group.by = "orig.ident", shuffle = TRUE, pt.size = 0.5) + 
