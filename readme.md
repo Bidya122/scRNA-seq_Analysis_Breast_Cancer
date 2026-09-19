@@ -1430,8 +1430,35 @@ The resulting cell-type annotations will be used for Normal vs Tumor cell-compos
 (Download the Python Script Here.)[] 
 
 **Setting up the Python Environment**
-The Python environment required for CellTypist was already configured during a previous project. Therefore, the same existing Python kernel was selected for this analysis rather than creating a new environment.  To download and setup a python environment [Please view this readme.md](https://github.com/Bidya122/scRNA-seq-Analysis_kidney_disease)
+The Python environment required for CellTypist was already configured during a previous project. Therefore, the same existing Python kernel was selected for this analysis rather than creating a new environment.  To download and setup a python environment [Please view this readme.md](https://github.com/Bidya122/scRNA-seq-Analysis_kidney_disease).
 
+```bash
+import scanpy as sc
+import anndata as ad
+import pandas as pd
+import numpy as np
+import celltypist 
+
+print("Scanpy:", sc.__version__)
+print("AnnData:", ad.__version__)
+```
+```bash
+import warnings   ## Import the warnings module to manage and silence non-critical system alerts
+
+# Suppress PerformanceWarnings from pandas, which often occur when highly 
+# fragmented DataFrames are created during large-scale single-cell data processing
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+```
+```bash
+ # Import the os module to interact with the operating system, 
+# allowing for file path management and directory navigation
+import os
+```
+```bash
+##ad is reserved for AnnData (the library that handles the data structure Scanpy uses).
+import anndata as ad ## Import anndata using the 'ad' alias
+```
+These chunks import the main Python libraries required for single-cell RNA-seq analysis and CellTypist, check the installed package versions, suppress non-critical performance warnings, and import os for managing file paths and directories. AnnData is imported as ad because it is the data structure used by Scanpy to store and process single-cell datasets.
 
 
 
