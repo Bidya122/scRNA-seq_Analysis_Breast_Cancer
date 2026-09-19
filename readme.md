@@ -1542,6 +1542,32 @@ sc.pl.umap(
 
 This section visualizes the Normal vs Tumor cell distribution on the same UMAP embedding. The Condition metadata determines the color of each cell, while size=4 and alpha=0.5 make the dense regions easier to visualize and allow overlapping cells to remain visible. This helps assess whether Normal and Tumor cells are distributed across the overall transcriptional landscape.
 
+```bash
+# Calculate Normal vs Tumor composition within each Seurat cluster
+
+cluster_condition = pd.crosstab(
+    GSE245601_phase1.obs["seurat_clusters"],
+    GSE245601_phase1.obs["Condition"]
+)
+
+cluster_condition_pct = (
+    cluster_condition
+    .div(cluster_condition.sum(axis=1), axis=0)
+    * 100
+)
+
+print("Cell counts:")
+display(cluster_condition)
+
+print("\nPercentage of cells within each cluster:")
+display(cluster_condition_pct.round(2))
+```
+<img width="188" height="547" alt="image" src="https://github.com/user-attachments/assets/fdc211d0-e6c2-4852-b72d-9f0a8af332cc" /> <img width="205" height="538" alt="image" src="https://github.com/user-attachments/assets/fec11b45-99fb-4640-8162-80f2b1a0af8c" />
+
+This section examines the Normal and Tumor composition of each Seurat cluster. First, the number of Normal and Tumor cells in every cluster is calculated using a contingency table. The counts are then converted into percentages within each cluster, allowing us to see whether individual clusters are predominantly composed of Normal or Tumor cells. This provides a quantitative view of the condition distribution across the identified clusters. The cluster-level composition showed substantial variation in Normal and Tumor representation. For example, cluster 3 was predominantly Normal (86.37%), whereas clusters 1, 5, 6, 13, and 15 were strongly Tumor-enriched (>98%). Clusters 8, 9, and 14 showed a relatively mixed Normal–Tumor composition. Very small clusters containing only a few cells were not considered biologically interpretable based on composition alone. 
+
+
+
 
 
 
