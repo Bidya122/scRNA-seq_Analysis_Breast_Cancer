@@ -1527,6 +1527,23 @@ sc.pl.umap(
 
 This section imports the UMAP coordinates generated in the Seurat workflow, verifies that the dimensions and cell identities match the AnnData object, and aligns the coordinates to the exact cell order. The Seurat clusters are then visualized on the UMAP to confirm the clustering structure.
 
+```bash
+# Visualize Normal vs Tumor distribution
+
+sc.pl.umap(
+    GSE245601_phase1,
+    color="Condition",
+    frameon=True,
+    size=4,
+    alpha=0.5
+)
+```
+<img width="428" height="267" alt="image" src="https://github.com/user-attachments/assets/8fc1c2e4-6b0a-4961-9533-510a75a901a6" />
+
+This section visualizes the Normal vs Tumor cell distribution on the same UMAP embedding. The Condition metadata determines the color of each cell, while size=4 and alpha=0.5 make the dense regions easier to visualize and allow overlapping cells to remain visible. This helps assess whether Normal and Tumor cells are distributed across the overall transcriptional landscape.
+
+
+
 
 
 
