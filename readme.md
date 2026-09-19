@@ -1429,7 +1429,8 @@ AnnData → Harmony-based neighbors → Over-clustering → CellTypist → Major
 The resulting cell-type annotations will be used for Normal vs Tumor cell-composition and downstream biological analysis. 
 (Download the Python Script Here.)[] 
 
-
+**Setting up the Python Environment**
+The Python environment required for CellTypist was already configured during a previous project. Therefore, the same existing Python kernel was selected for this analysis rather than creating a new environment.  To download and setup a python environment (Please view this readme.md)[https://github.com/Bidya122/scRNA-seq-Analysis_kidney_disease]
 
 
 
