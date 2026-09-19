@@ -1481,6 +1481,24 @@ print("Embeddings:", list(GSE245601_phase1.obsm.keys()))
 
 This section sets the working directory, loads the Harmony-corrected Phase 1 AnnData object generated from the R workflow, and checks the available embeddings such as PCA, UMAP, and Harmony for use in the downstream CellTypist analysis.
 
+```bash
+# Check Normal vs Tumor cell counts
+
+print("Condition:")
+print(GSE245601_phase1.obs["Condition"].value_counts())
+
+print("\nSeurat clusters:")
+print(GSE245601_phase1.obs["seurat_clusters"].value_counts().sort_index())
+
+print("\nGSM samples:")
+print(GSE245601_phase1.obs["GSM"].value_counts().sort_index())
+```
+<img width="270" height="541" alt="image" src="https://github.com/user-attachments/assets/d2e15b31-5dbb-450e-bba0-310ae162aeac" />
+
+This section performs a basic check of the dataset composition after importing the Phase 1 AnnData object. It reports the number of cells in the Normal and Tumor conditions, the number of cells assigned to each Seurat cluster, and the number of cells contributed by each GSM sample. This helps confirm that the expected metadata, clustering information, and sample distribution were successfully retained during the R-to-Python transfer.
+
+
+
 
 
 
