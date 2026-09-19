@@ -1450,7 +1450,7 @@ import warnings   ## Import the warnings module to manage and silence non-critic
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 ```
 ```bash
- # Import the os module to interact with the operating system, 
+# Import the os module to interact with the operating system, 
 # allowing for file path management and directory navigation
 import os
 ```
@@ -1459,6 +1459,27 @@ import os
 import anndata as ad ## Import anndata using the 'ad' alias
 ```
 These chunks import the main Python libraries required for single-cell RNA-seq analysis and CellTypist, check the installed package versions, suppress non-critical performance warnings, and import os for managing file paths and directories. AnnData is imported as ad because it is the data structure used by Scanpy to store and process single-cell datasets.
+
+```bash
+# Set the current working directory to the specified folder for saving plots
+os.chdir("D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1")
+os.getcwd()
+```
+```bash
+# Load the Phase 1 AnnData object
+# This object contains the processed Seurat data, including PCA/UMAP and Harmony-corrected information from the R workflow.
+GSE245601_phase1 = ad.read_h5ad("D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_harmony_phase1_corrected.h5ad")
+
+GSE245601_phase1
+
+# Check the available embeddings
+
+print("Embeddings:", list(GSE245601_phase1.obsm.keys()))
+```
+<img width="675" height="70" alt="image" src="https://github.com/user-attachments/assets/ff7c53b3-6ca9-494b-a7b2-a9b7a6847c67" />
+<img width="190" height="20" alt="image" src="https://github.com/user-attachments/assets/f2a5a726-4576-4f03-836f-2d5b62dc2f9f" />
+
+This section sets the working directory, loads the Harmony-corrected Phase 1 AnnData object generated from the R workflow, and checks the available embeddings such as PCA, UMAP, and Harmony for use in the downstream CellTypist analysis.
 
 
 
