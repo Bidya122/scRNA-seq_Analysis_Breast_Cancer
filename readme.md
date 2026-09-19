@@ -1497,6 +1497,38 @@ print(GSE245601_phase1.obs["GSM"].value_counts().sort_index())
 
 This section performs a basic check of the dataset composition after importing the Phase 1 AnnData object. It reports the number of cells in the Normal and Tumor conditions, the number of cells assigned to each Seurat cluster, and the number of cells contributed by each GSM sample. This helps confirm that the expected metadata, clustering information, and sample distribution were successfully retained during the R-to-Python transfer.
 
+```bash
+# Load and align UMAP coordinates exported from Seurat
+
+umap_df = pd.read_csv("D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_harmony_phase1_umap_coordinates.csv",  index_col=0)
+
+# Verify dimensions and cell matching
+print("UMAP dimensions:", umap_df.shape)
+print("AnnData cells:", GSE245601_phase1.n_obs)
+print(  "All AnnData cells found in UMAP CSV:",  GSE245601_phase1.obs_names.isin(umap_df.index).all())
+
+# Align UMAP coordinates to the exact cell order in AnnData
+GSE245601_phase1.obsm["X_umap"] = umap_df.loc[ GSE245601_phase1.obs_names].values
+
+print("Stored UMAP shape:", GSE245601_phase1.obsm["X_umap"].shape)
+
+# Visualize Seurat clusters with axes
+
+sc.pl.umap(
+    GSE245601_phase1,
+    color="seurat_clusters",
+    palette="tab20",
+    legend_loc="on data",
+    legend_fontsize=9,
+    frameon=True,
+    size=8)
+```
+<img width="401" height="318" alt="image" src="https://github.com/user-attachments/assets/f12c23a2-937d-4afc-88c9-d48e4c05eaca" />
+
+This section imports the UMAP coordinates generated in the Seurat workflow, verifies that the dimensions and cell identities match the AnnData object, and aligns the coordinates to the exact cell order. The Seurat clusters are then visualized on the UMAP to confirm the clustering structure.
+
+
+
 
 
 
