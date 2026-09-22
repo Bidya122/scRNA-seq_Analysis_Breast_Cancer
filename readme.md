@@ -1638,13 +1638,27 @@ print("File exists:", os.path.exists(destination))
 ```
 ```bash
 GSE245601_phase1.X = GSE245601_phase1.layers["logcounts"].copy()
-sc.pp.neighbors( GSE245601_phase1,  use_rep="HARMONY")
-sc.tl.leiden( GSE245601_phase1,  resolution=10, key_added="celltypist_clusters")
+sc.pp.neighbors( GSE245601_phase1,  use_rep="HARMONY") # 1. Build the neighbor graph using Harmony-corrected embeddings
+sc.tl.leiden( GSE245601_phase1,  resolution=10, key_added="celltypist_clusters") # 2. Generate high-resolution clusters for CellTypist over-clustering
 print(GSE245601_phase1)
 print(GSE245601_phase1.obsm["HARMONY"].shape)
 print(GSE245601_phase1.obs["celltypist_clusters"].nunique())
+
+# 3. Predict cell types using the adult human breast model
+ct_pred = celltypist.annotate(
+    GSE245601_phase1,
+    model=r"D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/Cells_Adult_Breast.pkl",
+    majority_voting=True,
+    over_clustering="celltypist_clusters")
+
+# 4. View predicted cell types
+print(ct_pred.predicted_labels.head())
 ```
-CellTypist's available model catalogue was reviewed and filtered using breast cancer- and solid-tissue-related keywords to identify suitable models for annotation. The Cells_Adult_Breast.pkl model was selected, downloaded, and copied into the Phase 1 project directory for reproducibility. Before annotation, the Harmony-corrected embedding was used to construct a neighbor graph, followed by Leiden clustering at resolution 10 to generate the clustering structure used for subsequent CellTypist-based cell-type annotation.
+<img width="852" height="506" alt="image" src="https://github.com/user-attachments/assets/0fb5faf1-a6de-4971-8818-403f67f14f31" />
+
+CellTypist's available model catalogue was reviewed and filtered using breast cancer- and solid-tissue-related keywords to identify suitable models for annotation. The Cells_Adult_Breast.pkl model was selected, downloaded, and copied into the Phase 1 project directory for reproducibility. Before annotation, the Harmony-corrected embedding was used to construct a neighbor graph, followed by Leiden clustering at resolution 10 to generate the clustering structure used for subsequent CellTypist-based cell-type annotation. CellTypist annotation was performed using the Cells_Adult_Breast.pkl model, with 3,787 model features used for prediction. Cell-level predictions were generated and subsequently refined using majority voting across the 141 high-resolution over-clusters. The resulting annotations included breast tissue cell identities such as Fibro-major, Vas-venous, and basal, providing an initial cell-type classification for the Phase 1 dataset.    
+
+
 
 
 
