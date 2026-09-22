@@ -1941,6 +1941,102 @@ unique_markers.to_csv(
 <img width="677" height="1945" alt="image" src="https://github.com/user-attachments/assets/5dcdc4f4-9931-47e8-9f0a-dbc4fd62664b" />
 
 
+The top 3 unique marker genes were identified for each CellTypist-derived cell-type/condition group using the Wilcoxon rank-sum test (adjusted p < 0.05, |logFC| > 0.25). Genes significant in only one group were retained to highlight group-specific expression patterns. The results showed distinct marker profiles across the Normal and Tumor populations. Several Tumor-associated groups displayed strong marker signals, including FOXP3 in CD4-Treg_Tumor, SPC25, PBK, and HJURP in Lumsec-prol_Tumor, LAMP3 and CCL17 in mDC_Tumor, and TNFRSF17 and DERL3 in plasma_IgA_Tumor. Normal-specific markers were also identified, such as CLDN10, CSN1S1, and SERPINB7 in Lumsec-basal_Normal and CAPN6, FRMD1, and DBX2 in Fibro-major_Normal.    
+Overall, the analysis identified group-specific marker genes that support the molecular distinction of the annotated cell-type/condition populations. These results were subsequently used for marker visualization using a dot plot.    
+
+
+```bash
+import pandas as pd
+import scanpy as sc
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 1. Subset Data
+# Remove any populations you do not want to include in the visualization.
+excluded_prefixes = []
+mask = ~GSE245601_phase1.obs["celltype_condition"].str.startswith(
+    tuple(excluded_prefixes)
+) if excluded_prefixes else np.ones(
+    GSE245601_phase1.n_obs, dtype=bool
+)
+
+adata_to_plot = GSE245601_phase1[mask].copy()
+
+
+# 2. Filter Gene List
+# Keep only marker genes that are present in the expression matrix.
+genes_to_plot = unique_markers["names"].tolist()
+genes_to_plot = [
+    g for g in genes_to_plot
+    if g in adata_to_plot.var_names
+]
+
+
+# 3. Data Transformation
+X = adata_to_plot[:, genes_to_plot].X
+
+if hasattr(X, "toarray"):
+    X = X.toarray()
+
+
+# 4. Aggregation
+# Calculate total expression for each gene within each
+# cell-type/condition group.
+expr_df = pd.DataFrame(
+    X,
+    index=adata_to_plot.obs["celltype_condition"],
+    columns=genes_to_plot
+)
+
+expr_per_group = expr_df.groupby(expr_df.index).sum()
+
+
+# 5. Filter Weak Markers
+# Keep genes with substantial expression in at least one group.
+genes_filtered = expr_per_group.columns[
+    expr_per_group.max(axis=0) >= 30
+].tolist()
+
+expr_per_group = expr_per_group[genes_filtered]
+
+
+# 6. Filter Groups
+# Keep groups with sufficient total expression signal.
+valid_groups = expr_per_group.index[
+    expr_per_group.sum(axis=1) > 20
+].tolist()
+
+adata_to_plot = adata_to_plot[
+    adata_to_plot.obs["celltype_condition"].isin(valid_groups)
+].copy()
+
+
+# 7. Dot Plot
+# Color is scaled independently for each gene (0–1),
+# making group-specific expression patterns easier to visualize.
+sc.pl.dotplot(
+    adata_to_plot,
+    var_names=genes_filtered,
+    groupby="celltype_condition",
+    standard_scale="var",
+    show=False,
+    figsize=(20, 20),
+    dendrogram=False
+)
+
+plt.savefig(
+    "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/"
+    "Celltype_condition_Markergenes.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.show()
+```
+<img width="987" height="928" alt="image" src="https://github.com/user-attachments/assets/88320638-a7b5-4606-a70d-091c170cf9df" />
+
+A dot plot was generated using the top 3 unique marker genes identified for each CellTypist-derived cell type/condition group. Expression patterns were visualized across Normal and Tumor groups to assess the specificity of the identified markers and their consistency with the assigned cell identities.
+
 
 
 
