@@ -1826,7 +1826,9 @@ GSE245601_phase1.obs["celltype_condition"] = (
     + GSE245601_phase1.obs["Condition"].astype(str))
 GSE245601_phase1.obs["celltype_condition"].value_counts()
 ```
-<img width="177" height="626" alt="image" src="https://github.com/user-attachments/assets/1ab1fa25-0d7c-4c0b-930f-ff24e5d3811a" />   
+<img width="177" height="626" alt="image" src="https://github.com/user-attachments/assets/1ab1fa25-0d7c-4c0b-930f-ff24e5d3811a" />
+
+
 ```bash
 def find_unique_markers(
     adata, 
