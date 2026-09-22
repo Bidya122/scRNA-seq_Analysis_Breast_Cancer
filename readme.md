@@ -1566,6 +1566,86 @@ display(cluster_condition_pct.round(2))
 
 This section examines the Normal and Tumor composition of each Seurat cluster. First, the number of Normal and Tumor cells in every cluster is calculated using a contingency table. The counts are then converted into percentages within each cluster, allowing us to see whether individual clusters are predominantly composed of Normal or Tumor cells. This provides a quantitative view of the condition distribution across the identified clusters. The cluster-level composition showed substantial variation in Normal and Tumor representation. For example, cluster 3 was predominantly Normal (86.37%), whereas clusters 1, 5, 6, 13, and 15 were strongly Tumor-enriched (>98%). Clusters 8, 9, and 14 showed a relatively mixed Normal–Tumor composition. Very small clusters containing only a few cells were not considered biologically interpretable based on composition alone. 
 
+```bash
+import celltypist
+
+print("CellTypist version:", celltypist.__version__)
+
+print("\nAvailable local models:")
+print(celltypist.models.models_path)
+```
+```bash
+import os
+
+model_dir = r"C:\Users\HP\.celltypist\data\models"
+
+models = [
+    f for f in os.listdir(model_dir)
+    if f.endswith(".pkl")
+]
+
+for model in sorted(models):
+    print(model)
+```
+The CellTypist installation was verified by checking the installed version and local model directory. The available .pkl files were then listed to confirm that the Cells_Adult_Breast.pkl model was successfully downloaded and available locally for breast cancer cell-type annotation but as I did not have it I had to download it.
+
+```bash
+import celltypist
+
+# Show the models available for download
+models = celltypist.models.models_description()
+print(models)
+```
+```bash
+# Filter CellTypist's model list for models potentially relevant
+# to breast cancer / solid-tissue annotation.
+
+keywords = ["breast", "cancer", "tumor", "mammary", "epithelial", "tissue"]
+
+relevant_models = models[
+    models["description"].str.contains(
+        "|".join(keywords),
+        case=False,
+        na=False
+    )
+]
+
+print(relevant_models.to_string(index=False))
+```
+```bash
+import celltypist
+
+# Download the adult human breast CellTypist model
+celltypist.models.download_models(
+    force_update=False,
+    model="Cells_Adult_Breast.pkl"
+)
+
+print("Adult breast model downloaded.")
+```
+```bash
+import os
+import shutil
+
+source = r"C:\Users\HP\.celltypist\data\models\Cells_Adult_Breast.pkl"
+destination = r"D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/Cells_Adult_Breast.pkl"
+
+shutil.copy2(source, destination)
+
+print("Copied to:")
+print(destination)
+print("File exists:", os.path.exists(destination))
+```
+```bash
+GSE245601_phase1.X = GSE245601_phase1.layers["logcounts"].copy()
+sc.pp.neighbors( GSE245601_phase1,  use_rep="HARMONY")
+sc.tl.leiden( GSE245601_phase1,  resolution=10, key_added="celltypist_clusters")
+print(GSE245601_phase1)
+print(GSE245601_phase1.obsm["HARMONY"].shape)
+print(GSE245601_phase1.obs["celltypist_clusters"].nunique())
+```
+CellTypist's available model catalogue was reviewed and filtered using breast cancer- and solid-tissue-related keywords to identify suitable models for annotation. The Cells_Adult_Breast.pkl model was selected, downloaded, and copied into the Phase 1 project directory for reproducibility. Before annotation, the Harmony-corrected embedding was used to construct a neighbor graph, followed by Leiden clustering at resolution 10 to generate the clustering structure used for subsequent CellTypist-based cell-type annotation.
+
 
 
 
