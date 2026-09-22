@@ -1816,6 +1816,128 @@ n_cells_condition.to_csv(
 
 CellTypist-derived cell-type proportions were compared between Normal and Tumor samples. The observed cellular composition differed substantially between the two conditions. Lumsec-basal cells represented the largest population in Normal samples (43.16%) but a smaller proportion of Tumor cells (4.24%). In contrast, several immune populations showed higher observed proportions in Tumor samples, including CD4-naive (0.57% vs 8.47%), CD8-Tem (0.16% vs 5.66%), CD4-Treg (0.01% vs 3.33%), and Mast cells (0.04% vs 3.24%). Fibro-major cells also increased in relative proportion from 9.86% in Normal to 12.46% in Tumor, while LummHR-SCGB increased from 1.29% to 5.78%. Among vascular populations, Vas-arterial cells decreased from 4.10% to 0.57%. These results describe differences in the observed cellular composition of the retained Normal and Tumor cell populations; they are descriptive and do not by themselves establish statistical significance or biological enrichment.    
 
+```bash
+# Create a combined cell-type + condition label
+# Format: "CellType_Condition" (e.g., "Lumsec-basal_Normal")
+
+GSE245601_phase1.obs["celltype_condition"] = (
+    GSE245601_phase1.obs["majority_voting"].astype(str)
+    + "_"
+    + GSE245601_phase1.obs["Condition"].astype(str))
+GSE245601_phase1.obs["celltype_condition"].value_counts()
+```
+<img width="177" height="626" alt="image" src="https://github.com/user-attachments/assets/1ab1fa25-0d7c-4c0b-930f-ff24e5d3811a" />   
+```bash
+def find_unique_markers(
+    adata, 
+    groupby="celltype_condition", 
+    method="wilcoxon", 
+    pval_threshold=0.05, 
+    logfc_threshold=0.25,
+    top_n=3,
+    min_cells_per_group=2
+):
+    """
+    Identify significant and unique DEGs for each cell-type/condition group.
+    """
+
+    # 1. Remove groups with too few cells
+    group_counts = adata.obs[groupby].value_counts()
+    valid_groups = group_counts[
+        group_counts >= min_cells_per_group
+    ].index.tolist()
+
+    # 2. Subset to valid groups
+    adata_filtered = adata[
+        adata.obs[groupby].isin(valid_groups)
+    ].copy()
+
+    # 3. Differential expression analysis
+    sc.tl.rank_genes_groups(
+        adata_filtered,
+        groupby=groupby,
+        method=method )
+
+    # 4. Extract DE results
+    all_degs = sc.get.rank_genes_groups_df(
+        adata_filtered,
+        group=None )
+
+    # 5. Filter by adjusted p-value and logFC
+    filtered_degs = all_degs[
+        (all_degs["pvals_adj"] < pval_threshold) &
+        (abs(all_degs["logfoldchanges"]) > logfc_threshold)]
+
+    # 6. Keep genes significant in only one group
+    unique_genes = (
+        filtered_degs
+        .groupby("names")["group"]
+        .nunique()
+        .reset_index()
+        .query("group == 1")["names"]
+        .tolist() )
+
+    # 7. Keep only unique DEGs
+    unique_degs_df = filtered_degs[
+        filtered_degs["names"].isin(unique_genes)
+    ].copy()
+
+    # 8. Select top N DEGs per group
+    top_unique_degs_df = (
+        unique_degs_df
+        .sort_values(
+            ["group", "logfoldchanges"],
+            ascending=[True, False] )
+        .groupby("group")
+        .head(top_n)
+        .reset_index(drop=True) )
+
+    return top_unique_degs_df
+
+
+# Run on GSE245601 Phase 1
+top_markers = find_unique_markers(
+    GSE245601_phase1,
+    groupby="celltype_condition",
+    method="wilcoxon",
+    pval_threshold=0.05,
+    logfc_threshold=0.25,
+    top_n=3,
+    min_cells_per_group=2)
+
+print(top_markers)
+```
+```bash
+# 1. Identify the top 3 highly specific markers for each cell type/condition group
+# Uses the Wilcoxon rank-sum test to identify significant genes
+# that are exclusive to only one group.
+
+unique_markers = find_unique_markers(
+    GSE245601_phase1,
+    groupby="celltype_condition",
+    method="wilcoxon",
+    pval_threshold=0.05,
+    logfc_threshold=0.25,
+    top_n=3,
+    min_cells_per_group=2
+)
+
+# 2. Validation and Export
+print(unique_markers.head())
+
+print(
+    unique_markers["group"].drop_duplicates()
+)
+
+unique_markers.to_csv(
+    "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/Unique_cluster_markers.csv",
+    index=False
+)
+```
+<img width="908" height="555" alt="image" src="https://github.com/user-attachments/assets/a93beddd-e30d-4080-a411-dcc41448c0cf" />
+
+
+
 
 
 
