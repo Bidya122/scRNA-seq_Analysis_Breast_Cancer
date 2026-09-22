@@ -1673,9 +1673,11 @@ print( GSE245601_phase1.obs["majority_voting"]
     .value_counts()
     .head())
 ```
-<img width="317" height="37" alt="image" src="https://github.com/user-attachments/assets/c8348e1a-d8a2-47da-8906-90bd789f90ac" />  
+<img width="317" height="37" alt="image" src="https://github.com/user-attachments/assets/c8348e1a-d8a2-47da-8906-90bd789f90ac" /> 
+
 
 <img width="262" height="172" alt="image" src="https://github.com/user-attachments/assets/e857d477-deb9-4909-8fdb-91ebce385b5b" />        
+
 The CellTypist majority-voting predictions were transferred to the AnnData metadata as a new majority_voting column. The frequency of each predicted cell type was then calculated to provide an initial census of the major cell populations identified in the Phase 1 breast cancer dataset. 
 
 ```bash
@@ -1728,20 +1730,91 @@ pd.crosstab(
 <img width="313" height="817" alt="image" src="https://github.com/user-attachments/assets/bfecedfd-d684-4104-b20e-fb8e57362c50" />    
 CellTypist-based cell-type composition was compared between Normal and Tumor samples using the majority-voting annotations. Because the number of cells differed substantially between conditions (13,767 Normal vs 43,653 Tumor), comparisons were based on the proportion of cells within each condition rather than raw cell counts. The predicted composition showed notable differences between conditions. Lumsec-basal represented a large fraction of the Normal population (43.16%) but a smaller fraction of the Tumor population (4.24%), whereas several immune populations showed higher relative representation in Tumor, including CD4-naive (8.47%), CD8-Tem (5.66%), CD4-Treg (3.33%), Mast (3.24%), and bmem_switched (3.37%). LummHR-major showed a relatively similar representation between Normal (25.41%) and Tumor (28.39%), while Fibro-major accounted for 9.86% of Normal and 12.46% of Tumor cells. These results describe differences in the CellTypist-predicted cellular composition between conditions and will be further evaluated using marker-gene expression to validate the predicted identities.    
 
+```bash
+import matplotlib.pyplot as plt
+import seaborn as sns
 
+# Step 1: Count cells for each CellTypist cell type within each condition
+n_cells_condition = (
+    GSE245601_phase1.obs
+    .groupby(["Condition", "majority_voting"])
+    .size()
+    .reset_index(name="count")
+)
 
+# Step 2: Calculate cell-type proportions within each condition
+n_cells_condition["total"] = (
+    n_cells_condition
+    .groupby("Condition")["count"]
+    .transform("sum")
+)
 
+n_cells_condition["proportion"] = (
+    n_cells_condition["count"] /
+    n_cells_condition["total"]
+) * 100
 
+# Step 3: Order cell types by their average proportion
+avg_proportions = (
+    n_cells_condition
+    .groupby("majority_voting")["proportion"]
+    .mean()
+    .sort_values(ascending=False)
+)
 
+ordered_celltypes = avg_proportions.index.tolist()
 
+# Step 4: Generate horizontal bar plot
+plt.figure(figsize=(12, 18))
 
+ax = sns.barplot(
+    data=n_cells_condition,
+    y="majority_voting",
+    x="proportion",
+    hue="Condition",
+    order=ordered_celltypes,
+    dodge=True
+)
 
+# Step 5: Add percentage labels
+for container in ax.containers:
+    ax.bar_label(
+        container,
+        fmt="%.1f%%",
+        label_type="edge",
+        padding=2,
+        fontsize=8
+    )
 
+plt.xlabel("Proportion (%)", fontsize=12, fontweight="bold")
+plt.ylabel("Cell Type", fontsize=12, fontweight="bold")
+plt.title(
+    "Cell Type Proportions: Normal vs Tumor",
+    fontsize=14,
+    fontweight="bold"
+)
 
+plt.tight_layout()
 
+plt.savefig(
+    "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/Cellproportions_barplot.png",
+    dpi=600,
+    bbox_inches="tight"
+)
 
+plt.show()
 
+# Save the table
+n_cells_condition.to_csv(
+    "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/Cellproportions.csv",
+    index=False
+)
+```
+<img width="635" height="941" alt="image" src="https://github.com/user-attachments/assets/be53c447-7218-4441-aadc-3e39c3989233" />
 
+<img width="878" height="557" alt="image" src="https://github.com/user-attachments/assets/5ba80ead-41b0-4cd7-8f3b-93601a5f1d95" />
+
+CellTypist-derived cell-type proportions were compared between Normal and Tumor samples. The observed cellular composition differed substantially between the two conditions. Lumsec-basal cells represented the largest population in Normal samples (43.16%) but a smaller proportion of Tumor cells (4.24%). In contrast, several immune populations showed higher observed proportions in Tumor samples, including CD4-naive (0.57% vs 8.47%), CD8-Tem (0.16% vs 5.66%), CD4-Treg (0.01% vs 3.33%), and Mast cells (0.04% vs 3.24%). Fibro-major cells also increased in relative proportion from 9.86% in Normal to 12.46% in Tumor, while LummHR-SCGB increased from 1.29% to 5.78%. Among vascular populations, Vas-arterial cells decreased from 4.10% to 0.57%. These results describe differences in the observed cellular composition of the retained Normal and Tumor cell populations; they are descriptive and do not by themselves establish statistical significance or biological enrichment.    
 
 
 
