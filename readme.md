@@ -1673,9 +1673,62 @@ print( GSE245601_phase1.obs["majority_voting"]
     .value_counts()
     .head())
 ```
-<img width="317" height="37" alt="image" src="https://github.com/user-attachments/assets/c8348e1a-d8a2-47da-8906-90bd789f90ac" />   
-<img width="262" height="172" alt="image" src="https://github.com/user-attachments/assets/e857d477-deb9-4909-8fdb-91ebce385b5b" />    
+<img width="317" height="37" alt="image" src="https://github.com/user-attachments/assets/c8348e1a-d8a2-47da-8906-90bd789f90ac" />  
+
+<img width="262" height="172" alt="image" src="https://github.com/user-attachments/assets/e857d477-deb9-4909-8fdb-91ebce385b5b" />        
 The CellTypist majority-voting predictions were transferred to the AnnData metadata as a new majority_voting column. The frequency of each predicted cell type was then calculated to provide an initial census of the major cell populations identified in the Phase 1 breast cancer dataset. 
+
+```bash
+import os
+import matplotlib.pyplot as plt
+import scanpy as sc
+
+# Create output directory if it doesn't exist
+out_dir = "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/"
+os.makedirs(out_dir, exist_ok=True)
+
+# Generate a UMAP for each condition
+for cond in GSE245601_phase1.obs["Condition"].unique():
+
+    adata_subset = GSE245601_phase1[
+        GSE245601_phase1.obs["Condition"] == cond]
+
+    fig = sc.pl.umap(
+        adata_subset,
+        color="majority_voting",
+        title=f"Condition: {cond}",
+        legend_loc="right margin",
+        show=False,
+        return_fig=True)
+
+    fig.savefig(
+        os.path.join(
+            out_dir,
+            f"umap_celltypes_celltypist_{cond}.png"),
+        dpi=300,
+        bbox_inches="tight")
+
+    plt.show()
+    plt.close(fig)
+```
+<img width="1647" height="803" alt="image" src="https://github.com/user-attachments/assets/490b7aea-1baf-4a0f-9f24-2c2fde63278d" />
+
+<img width="1638" height="797" alt="image" src="https://github.com/user-attachments/assets/a3fa1010-103d-478b-a1b9-2e71a0fd2c58" />
+
+Automated cell type annotation using CellTypist resolves pronounced compositional and phenotypic remodeling between the normal and tumor microenvironments across the shared UMAP embedding. In normal tissue, the cellular landscape is dominated by balanced, homeostatic epithelial compartments partitioned clearly into distinct luminal and basal states (`LummHR` and `Lumsec-basal`) with only sparse, baseline resident immune populations. In contrast, the tumor condition reveals marked epithelial distortion, characterized by a massive, consolidated expansion of altered luminal subtypes (`LummHR-major` and `Lumsec` lineages) indicative of aberrant lineage fidelity and malignant outgrowth.
+
+Concurrently, the tumor embedding exhibits extensive recruitment and activation of the immune compartment. A dense, multifaceted lymphoid infiltrate emerges in the tumor microenvironment, prominently enriched for cytotoxic and regulatory T-cell subsets (`CD8-Tem`, `CD8-Trm`, and `CD4-Treg`) as well as `NK-ILCs`. This is accompanied by distinct clusters of tumor-associated myeloid and antigen-presenting cells, including `Macro-m2-CXCL`, mature dendritic cells (`mDC`), and `Mast` cells, alongside expanded memory B-cell and plasma cell populations (`bmem` and `plasma_IgA`), highlighting active immune infiltration within an immunosuppressive niche. Meanwhile, stromal (`Fibro-major`, `Fibro-SFRP4`, `vSMC`) and endothelial compartments (`Vas-capillary`, `Vas-arterial`) remain structurally demarcated, reflecting underlying angiogenic remodeling alongside stromal reorganization across disease progression. 
+
+```bash
+pd.crosstab(
+    GSE245601_phase1.obs["majority_voting"],
+    GSE245601_phase1.obs["Condition"]
+)
+```
+<img width="313" height="817" alt="image" src="https://github.com/user-attachments/assets/bfecedfd-d684-4104-b20e-fb8e57362c50" />    
+CellTypist-based cell-type composition was compared between Normal and Tumor samples using the majority-voting annotations. Because the number of cells differed substantially between conditions (13,767 Normal vs 43,653 Tumor), comparisons were based on the proportion of cells within each condition rather than raw cell counts. The predicted composition showed notable differences between conditions. Lumsec-basal represented a large fraction of the Normal population (43.16%) but a smaller fraction of the Tumor population (4.24%), whereas several immune populations showed higher relative representation in Tumor, including CD4-naive (8.47%), CD8-Tem (5.66%), CD4-Treg (3.33%), Mast (3.24%), and bmem_switched (3.37%). LummHR-major showed a relatively similar representation between Normal (25.41%) and Tumor (28.39%), while Fibro-major accounted for 9.86% of Normal and 12.46% of Tumor cells. These results describe differences in the CellTypist-predicted cellular composition between conditions and will be further evaluated using marker-gene expression to validate the predicted identities.    
+
+
 
 
 
