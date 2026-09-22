@@ -1907,6 +1907,7 @@ top_markers = find_unique_markers(
 
 print(top_markers)
 ```
+
 ```bash
 # 1. Identify the top 3 highly specific markers for each cell type/condition group
 # Uses the Wilcoxon rank-sum test to identify significant genes
@@ -1934,7 +1935,7 @@ unique_markers.to_csv(
     index=False
 )
 ```
-<img width="908" height="555" alt="image" src="https://github.com/user-attachments/assets/a93beddd-e30d-4080-a411-dcc41448c0cf" />
+
 
 
 
