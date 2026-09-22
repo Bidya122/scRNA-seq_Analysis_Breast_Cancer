@@ -1658,6 +1658,25 @@ print(ct_pred.predicted_labels.head())
 
 CellTypist's available model catalogue was reviewed and filtered using breast cancer- and solid-tissue-related keywords to identify suitable models for annotation. The Cells_Adult_Breast.pkl model was selected, downloaded, and copied into the Phase 1 project directory for reproducibility. Before annotation, the Harmony-corrected embedding was used to construct a neighbor graph, followed by Leiden clustering at resolution 10 to generate the clustering structure used for subsequent CellTypist-based cell-type annotation. CellTypist annotation was performed using the Cells_Adult_Breast.pkl model, with 3,787 model features used for prediction. Cell-level predictions were generated and subsequently refined using majority voting across the 141 high-resolution over-clusters. The resulting annotations included breast tissue cell identities such as Fibro-major, Vas-venous, and basal, providing an initial cell-type classification for the Phase 1 dataset.    
 
+```bash
+# Count the total number of high-resolution Leiden clusters
+# generated for CellTypist over-clustering.
+print( f"Number of clusters created: " f"{GSE245601_phase1.obs['celltypist_clusters'].nunique()}")
+```
+```bash
+# Transfer CellTypist majority-voting predictions to the AnnData object.
+# Convert labels to strings for compatibility with Scanpy plotting functions.
+GSE245601_phase1.obs["majority_voting"] = ( ct_pred.predicted_labels["majority_voting"] .astype(str))
+
+# Display the 5 most frequent cell types.
+print( GSE245601_phase1.obs["majority_voting"]
+    .value_counts()
+    .head())
+```
+<img width="317" height="37" alt="image" src="https://github.com/user-attachments/assets/c8348e1a-d8a2-47da-8906-90bd789f90ac" />   
+<img width="262" height="172" alt="image" src="https://github.com/user-attachments/assets/e857d477-deb9-4909-8fdb-91ebce385b5b" />    
+The CellTypist majority-voting predictions were transferred to the AnnData metadata as a new majority_voting column. The frequency of each predicted cell type was then calculated to provide an initial census of the major cell populations identified in the Phase 1 breast cancer dataset. 
+
 
 
 
