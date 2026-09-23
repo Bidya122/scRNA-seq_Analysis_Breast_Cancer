@@ -2035,7 +2035,15 @@ plt.show()
 ```
 <img width="987" height="928" alt="image" src="https://github.com/user-attachments/assets/88320638-a7b5-4606-a70d-091c170cf9df" />
 
-A dot plot was generated using the top 3 unique marker genes identified for each CellTypist-derived cell type/condition group. Expression patterns were visualized across Normal and Tumor groups to assess the specificity of the identified markers and their consistency with the assigned cell identities.
+A dot plot was generated using the top 3 unique marker genes identified for each CellTypist-derived cell type/condition group. Expression patterns were visualized across Normal and Tumor groups to assess the specificity of the identified markers and their consistency with the assigned cell identities. 
+
+```bash
+#to save this file with the majority voting and the markers
+GSE245601_phase1.write(
+    "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.h5ad"
+)
+```
+
 
 
 
