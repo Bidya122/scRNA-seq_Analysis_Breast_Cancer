@@ -2085,6 +2085,9 @@ head( seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condit
 ```
 <img width="1323" height="352" alt="image" src="https://github.com/user-attachments/assets/4a431f0e-5e57-473c-8f90-131ca0ae5611" />
 
+<img width="1520" height="241" alt="image" src="https://github.com/user-attachments/assets/cf35eb78-dea8-452d-9dec-18b2c560bd8f" />
+
+
 
 
 
