@@ -2039,10 +2039,31 @@ A dot plot was generated using the top 3 unique marker genes identified for each
 
 ```bash
 #to save this file with the majority voting and the markers
-GSE245601_phase1.write(
-    "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.h5ad"
-)
+GSE245601_phase1.write( "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.h5ad")
 ```
+
+## 10. R-based downstream analysis 
+
+Following the Python-based preprocessing, Harmony integration, and CellTypist cell-type annotation, I am continuing GSE245601 breast cancer scRNA-seq analysis in R after Python-based Harmony integration and CellTypist annotation. Currently assessing Normal vs Tumor cell-type composition and preparing cell-type-specific differential expression analysis.    
+
+```bash
+#Set the directories
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
+outputDir<- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Output"
+plotDir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Plots"
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+dir.create(phase1Dir, recursive = TRUE, showWarnings = FALSE)
+```
+```bash
+#Load the Libraries
+library(zellkonverter)
+library(SingleCellExperiment)
+library(Seurat)
+library(MAST)
+library(tidyverse)
+```
+
+
 
 
 
