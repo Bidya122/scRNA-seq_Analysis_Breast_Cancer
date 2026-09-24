@@ -2062,6 +2062,29 @@ library(Seurat)
 library(MAST)
 library(tidyverse)
 ```
+```bash
+sce <- readH5AD("D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.h5ad") ## readH5AD() converts it into a SingleCellExperiment (SCE) object in R
+
+####you will see some messages like:
+#ℹ Using stored X_name value 'counts'
+#<sys>:0: FutureWarning: Use varm (e.g. `k in adata.varm` or `adata.varm.keys() | {'u'}`) instead of AnnData.varm_keys, AnnData.varm_keys is deprecated and will be removed in the future.
+#<sys>:0: FutureWarning: Use obsm (e.g. `k in adata.obsm` or `adata.obsm.keys() | {'u'}`) instead of AnnData.obsm_keys, AnnData.obsm_keys is deprecated and will be removed in the future.
+
+seurat_obj <- as.Seurat(sce, counts = "counts", data = "logcounts")  # Convert the SingleCellExperiment object into a Seurat object
+
+saveRDS(seurat_obj, "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.rds") # Save the Seurat object as an .rds file. saveRDS() stores the object in compressed R format, so you can reload it later without repeating conversion steps
+```
+```bash
+#Load the RDS object and setting up the data
+seurat_obj <- readRDS( "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.rds")
+colnames(seurat_obj@meta.data)
+sort(table(seurat_obj$celltype_condition), decreasing = TRUE)
+head(seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condition")])
+seurat_obj$celltype <- sub(  "_(Normal|Tumor)$", "", seurat_obj$celltype_condition)
+head( seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condition", "celltype" )])
+```
+<img width="1323" height="352" alt="image" src="https://github.com/user-attachments/assets/4a431f0e-5e57-473c-8f90-131ca0ae5611" />
+
 
 
 
