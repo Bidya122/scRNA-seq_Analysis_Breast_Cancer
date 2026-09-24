@@ -2082,6 +2082,8 @@ sort(table(seurat_obj$celltype_condition), decreasing = TRUE)
 head(seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condition")])
 seurat_obj$celltype <- sub(  "_(Normal|Tumor)$", "", seurat_obj$celltype_condition)
 head( seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condition", "celltype" )])
+Assays(seurat_obj) # "originalexp"
+DefaultAssay(seurat_obj) <- "originalexp"
 ```
 <img width="1323" height="352" alt="image" src="https://github.com/user-attachments/assets/4a431f0e-5e57-473c-8f90-131ca0ae5611" />
 
