@@ -2089,6 +2089,189 @@ DefaultAssay(seurat_obj) <- "originalexp"
 
 <img width="1520" height="241" alt="image" src="https://github.com/user-attachments/assets/cf35eb78-dea8-452d-9dec-18b2c560bd8f" />
 
+## 11. Cell Type-Specific Differential Expression Analysis Using MAST
+
+```bash
+run_mast_per_celltype_Tumor_vs_Normal <- function( seu,
+  celltype_col = "majority_voting",
+  condition_col = "Condition",
+  min_cells_per_group = 20) {
+
+  dir.create(phase1Dir, showWarnings = FALSE, recursive = TRUE)
+
+  meta <- seu@meta.data
+  celltypes <- sort(unique(meta[[celltype_col]]))
+
+  for (ct in celltypes) {
+
+    cat("\n▶ Processing cell type:", ct, "\n")
+
+    cells_ct <- rownames(meta)[meta[[celltype_col]] == ct]
+
+    cond_tab <- table(meta[cells_ct, condition_col])
+    print(cond_tab)
+
+    # Check whether both Tumor and Normal are present
+    if (!all(c("Tumor", "Normal") %in% names(cond_tab))) {
+      cat("  ❌ Tumor or Normal missing → skipping\n")
+      next}
+
+    # Check minimum cell count
+    if (any(cond_tab[c("Tumor", "Normal")] < min_cells_per_group)) {
+      cat("  ❌ Not enough cells → skipping\n")
+      next}
+
+    # Subset to the current cell type
+    seu_ct <- subset(seu, cells = cells_ct)
+
+    # Use original expression assay
+    DefaultAssay(seu_ct) <- "originalexp"
+
+    # Normalize expression data
+    seu_ct <- NormalizeData(seu_ct, verbose = FALSE)
+
+    # Set identities to Normal/Tumor
+    Idents(seu_ct) <- condition_col
+
+    # Run MAST: Tumor vs Normal
+    deg <- FindMarkers(
+      seu_ct,
+      ident.1 = "Tumor",
+      ident.2 = "Normal",
+      test.use = "MAST",
+      logfc.threshold = 0,  # -> tests all genes regardless of fold change
+      min.pct = 0.1,         # -> gene must be expressed in at least 10% of cells
+      latent.vars = c("nCount_RNA", "percent.mt"))  # latent.vars-> adjusts for technical confounders: nCount_RNA = sequencing depth, percent.mt = mitochondrial gene percentage
+
+
+    # Add gene names as a column
+    deg$gene <- rownames(deg)
+
+    # Clean cell type name for filename
+    ct_clean <- gsub("[^a-zA-Z0-9]", "_", ct)
+
+    # Output filename
+    out_file <- file.path(  phase1Dir, paste0("DEG_", ct_clean, "_Tumor_vs_Normal.csv"))
+
+    # Save DEG table
+    write.csv(deg, out_file, row.names = FALSE)
+
+    cat("  ✔ Saved:", out_file, "\n")
+  }
+}
+
+run_mast_per_celltype_Tumor_vs_Normal(seurat_obj)
+```
+```bash
+# List the MAST result CSV files
+mast_files <- list.files( phase1Dir, pattern = "^DEG_.*_Tumor_vs_Normal\\.csv$", full.names = TRUE)
+
+length(mast_files)
+basename(mast_files)
+
+##Sanity Check
+
+meta <- seurat_obj@meta.data
+
+celltypes <- sort(unique(meta[["majority_voting"]]))
+
+skipped_celltypes <- c()
+
+for (ct in celltypes) {
+
+  cells_ct <- rownames(meta)[meta[["majority_voting"]] == ct]
+
+  cond_tab <- table(meta[cells_ct, "Condition"])
+
+  tumor_n  <- if ("Tumor" %in% names(cond_tab)) cond_tab["Tumor"] else 0
+  normal_n <- if ("Normal" %in% names(cond_tab)) cond_tab["Normal"] else 0
+
+  # MAST required at least 20 cells in BOTH groups
+  if (tumor_n < 20 || normal_n < 20) {
+    skipped_celltypes <- c(skipped_celltypes, ct)
+  }
+}
+
+cat("Total cell types:", length(celltypes), "\n")
+cat("Cell types skipped from MAST:", length(skipped_celltypes), "\n")
+cat("Cell types analyzed by MAST:", length(celltypes) - length(skipped_celltypes), "\n")
+
+skipped_celltypes
+```
+<img width="1402" height="101" alt="image" src="https://github.com/user-attachments/assets/9f941d67-5012-4a41-90a6-1291b897eae7" />
+
+Differential gene expression between Tumor and Normal samples was performed separately for each CellTypist-annotated cell type using the MAST test implemented in Seurat. To ensure sufficient representation in both groups, a minimum of 20 cells per condition was required for each cell type. Of the 28 annotated cell types, 20 met this criterion and were included in the MAST analysis, while 8 cell types (CD4-Th, CD4-Treg, CD8-Trm, Fibro-SFRP4, Lumsec-prol, Mast, bmem_unswitched, and mDC) were excluded due to insufficient cell numbers in at least one condition. Tumor was compared against Normal using ident.1 = "Tumor" and ident.2 = "Normal", with nCount_RNA and percent.mt included as latent variables to account for technical variation. Genes were tested without a log2 fold-change threshold (logfc.threshold = 0) and were required to be expressed in at least 10% of cells (min.pct = 0.1). An adjusted p-value (p_val_adj < 0.05) was used to identify statistically significant differentially expressed genes. Positive avg_log2FC values indicate higher expression in Tumor, while negative values indicate higher expression in Normal.    
+
+## 12. Summarizing the MAST results
+
+```bash
+deg_summary <- data.frame(
+  CellType = character(),
+  Tumor_upregulated = integer(),
+  Normal_upregulated = integer(),
+  Total_DEGs = integer(),
+  stringsAsFactors = FALSE
+)
+
+for (file in mast_files) { deg_data <- read.csv( file, stringsAsFactors = FALSE)
+
+  # Check required columns
+  if (!all(c("avg_log2FC", "p_val_adj") %in% colnames(deg_data))) {
+
+    warning(
+      paste(
+        "Skipping file because required columns are missing:",
+        basename(file) ) )
+
+    next
+  }
+
+  # Significant Tumor-upregulated genes
+  tumor_up <- sum(
+    deg_data$avg_log2FC > 0 &
+    deg_data$p_val_adj < 0.05,
+    na.rm = TRUE )
+
+  # Significant Normal-upregulated genes
+  normal_up <- sum(
+    deg_data$avg_log2FC < 0 &
+    deg_data$p_val_adj < 0.05,
+    na.rm = TRUE )
+
+  # Extract cell type from filename
+  celltype <- sub( "^DEG_(.*)_Tumor_vs_Normal\\.csv$",  "\\1", basename(file) )
+
+  # Add to summary
+  deg_summary <- rbind(
+    deg_summary,
+    data.frame(
+      CellType = celltype,
+      Tumor_upregulated = tumor_up,
+      Normal_upregulated = normal_up,
+      Total_DEGs = tumor_up + normal_up
+    )
+  )
+}
+
+
+# --------------------------------------------------
+# Sort by total number of DEGs
+# --------------------------------------------------
+
+deg_summary <- deg_summary %>%
+  arrange(desc(Total_DEGs))
+
+print(deg_summary)
+
+write.csv( deg_summary, file.path( phase1Dir, "GSE245601_DEGsummary_Tumor_vs_Normal.csv" ), row.names = FALSE)
+```
+For each cell type, I compared Tumor and Normal cells using MAST. I counted how many significant genes had higher expression in Tumor and how many had higher expression in Normal. This showed that different cell types have different transcriptional patterns between the two conditions. I don't interpret a higher DEG count alone as greater biological importance; I used the specific genes, their fold changes, and pathway enrichment for biological interpretation.    
+
+<img width="619" height="505" alt="image" src="https://github.com/user-attachments/assets/ffd033dc-2929-458a-9db4-dc004a3a4420" />
+
+The MAST results showed substantial variation in the number and direction of differentially expressed genes across cell types. The largest numbers of significant DEGs were observed in the LummHR_SCGB (8,098), LummHR_major (7,484), Lumsec_basal (3,877), and Fibro_major (2,466) cell types. In LummHR_SCGB and LummHR_major cells, a large number of genes were significantly higher in Tumor as well as Normal, indicating extensive transcriptional differences between the two conditions. In contrast, Lumsec_basal showed more genes with higher expression in Normal (2,574) than in Tumor (1,303). Vascular cell populations also showed predominantly more Normal-upregulated genes, including Vas_venous (622 vs. 357), Vas_capillary (530 vs. 234), and Vas_arterial (485 vs. 121). Among immune populations, CD4_naive showed 102 Normal-upregulated and 47 Tumor-upregulated genes, while CD4_Tem, CD4_Th_like, Macro_lipo, and other immune populations had relatively few significant DEGs under the applied criteria. Overall, the results demonstrate cell-type-specific differences in transcriptional profiles between Tumor and Normal conditions, with the magnitude and direction of differential expression varying substantially across cell populations.    
+
+
 
 
 
