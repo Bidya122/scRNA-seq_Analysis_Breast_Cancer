@@ -2405,6 +2405,13 @@ Positive NES: pathway genes are enriched toward the Tumor-upregulated end of the
 Negative NES: pathway genes are enriched toward the Normal-upregulated end of the ranked gene list.    
 These results provide a pathway-level view of the transcriptional differences identified by MAST and allow biological processes to be compared across different breast cancer cell types.    
 
+-------------------------------------------------------------------------
+Reactome GSEA results were obtained for 19 of the 20 cell types included in the MAST analysis.
+
+The CD8_Tem cell type contained sufficient MAST results for analysis (3,383 genes, with 3,349 genes successfully mapped to ENTREZ IDs). However, Reactome GSEA did not identify any pathway meeting the specified enrichment criteria for this cell type. Therefore, no pathway result CSV was generated for CD8_Tem.
+
+Thus, the absence of a GSEA output file for CD8_Tem reflects the lack of significant Reactome pathway enrichment under the applied criteria, rather than insufficient input genes or a failure of the MAST analysis.
+
 
 
 
