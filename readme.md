@@ -2271,7 +2271,51 @@ For each cell type, I compared Tumor and Normal cells using MAST. I counted how 
 
 The MAST results showed substantial variation in the number and direction of differentially expressed genes across cell types. The largest numbers of significant DEGs were observed in the LummHR_SCGB (8,098), LummHR_major (7,484), Lumsec_basal (3,877), and Fibro_major (2,466) cell types. In LummHR_SCGB and LummHR_major cells, a large number of genes were significantly higher in Tumor as well as Normal, indicating extensive transcriptional differences between the two conditions. In contrast, Lumsec_basal showed more genes with higher expression in Normal (2,574) than in Tumor (1,303). Vascular cell populations also showed predominantly more Normal-upregulated genes, including Vas_venous (622 vs. 357), Vas_capillary (530 vs. 234), and Vas_arterial (485 vs. 121). Among immune populations, CD4_naive showed 102 Normal-upregulated and 47 Tumor-upregulated genes, while CD4_Tem, CD4_Th_like, Macro_lipo, and other immune populations had relatively few significant DEGs under the applied criteria. Overall, the results demonstrate cell-type-specific differences in transcriptional profiles between Tumor and Normal conditions, with the magnitude and direction of differential expression varying substantially across cell populations.    
 
+## 13. Reactome Pathway GSEA of MAST Results
+To investigate the biological pathways associated with the observed transcriptional differences, Reactome pathway enrichment analysis was performed using the MAST results. For each cell type, genes were ranked based on their avg_log2FC from the Tumor vs Normal comparison and used for Gene Set Enrichment Analysis (GSEA).     
+Positive NES indicates enrichment toward Tumor-upregulated genes, while negative NES indicates enrichment toward Normal-upregulated genes.
 
+```bash
+# List the MAST result CSV files 
+#All the mast csv files I put into another folder called Tumor vs Normal inside phase1 Directory 
+mast_dir <- file.path(phase1Dir, "Tumor vs Normal")
+mast_files <- list.files(  mast_dir, pattern = "^DEG_.*_Tumor_vs_Normal\\.csv$", full.names = TRUE)
+length(mast_files)
+
+
+all_pathways_df <- data.frame() # Create empty dataframe to store Reactome pathway enrichment # results from ALL cell types together
+
+for (file_path in mast_files)
+  { file_name <- basename(file_path) 
+  message("\n==============================") 
+  message("▶ Processing file: ", file_name)
+```
+The MAST differential expression results for the 20 eligible cell types were stored as separate CSV files in the Tumor vs Normal directory.    
+The file paths were collected programmatically, and a loop was used to process each cell type individually. An empty dataframe was also initialized to combine the Reactome pathway enrichment results from all cell types into a single table. This ensures that pathway enrichment is performed separately within each cell type, allowing Tumor vs Normal biological differences to be examined at the cell-type level.     
+
+```bash
+ # Extract cell type name from filename # Example: # DEG_LummHR_major_Tumor_vs_Normal.csv # → LummHR_major 
+
+celltype <- sub( "^DEG_(.*?)_Tumor_vs_Normal\\.csv$", "\\1", file_name ) 
+if (celltype == file_name) 
+{ warning("⚠ Celltype extraction FAILED for file: ", file_name) 
+  next }
+
+celltype_clean <- gsub( "[^a-zA-Z0-9]", "_", celltype ) 
+condition <- "Tumor_vs_Normal" 
+message(" ✔ Cell type identified: ", celltype)
+
+# Read MAST DEG file
+res <- tryCatch( read.csv( file_path, stringsAsFactors = FALSE ), 
+                 error = function(e) { 
+                   message( " ❌ Failed to read file: ", e$message ) 
+                   return(NULL) } ) 
+
+if (is.null(res)) next 
+message( " ✔ DEG rows read: ", 
+         nrow(res) )
+```
+The cell type was extracted from each MAST result filename to maintain the association between differential expression results and the corresponding annotated cell population. The MAST CSV files were then read individually into R. Filename validation and error handling were included to skip incorrectly named or unreadable files without interrupting the analysis of the remaining cell types. The number of DEG entries read from each file was also recorded as a quality check before proceeding to gene ID mapping and Reactome GSEA.    
 
 
 
