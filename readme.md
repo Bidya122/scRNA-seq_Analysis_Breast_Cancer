@@ -2317,6 +2317,57 @@ message( " ✔ DEG rows read: ",
 ```
 The cell type was extracted from each MAST result filename to maintain the association between differential expression results and the corresponding annotated cell population. The MAST CSV files were then read individually into R. Filename validation and error handling were included to skip incorrectly named or unreadable files without interrupting the analysis of the remaining cell types. The number of DEG entries read from each file was also recorded as a quality check before proceeding to gene ID mapping and Reactome GSEA.    
 
+```bash
+# Verify required columns exist # gene = gene symbols # avg_log2FC = Tumor vs Normal fold change
+
+if (!all( c("gene", "avg_log2FC") %in% colnames(res) )) { 
+  warning( " ⚠ Missing required columns in: ", 
+             file_name ) 
+  next 
+  }
+
+# Convert Gene SYMBOLs → ENTREZ IDs # Reactome GSEA requires ENTREZ IDs
+
+ncbi_map <- suppressMessages( clusterProfiler::bitr( res$gene, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Hs.eg.db ) ) 
+message( " ✔ Genes mapped to ENTREZ: ", nrow(ncbi_map) )
+
+# Merge MAST results with ENTREZ mapping
+res_mapped <- res %>% left_join( ncbi_map, by = c("gene" = "SYMBOL") ) %>% filter( !is.na(ENTREZID) ) %>% 
+  distinct( ENTREZID, .keep_all = TRUE ) 
+message( " ✔ Genes after filtering: ", nrow(res_mapped) )
+
+# Create ranked gene list for GSEA # # Positive avg_log2FC: # → higher expression in Tumor # # Negative avg_log2FC: # → higher expression in Normal
+gene_list <- res_mapped$avg_log2FC 
+names(gene_list) <- res_mapped$ENTREZID # Sort genes from highest positive logFC to most negative logFC 
+gene_list <- sort( gene_list, decreasing = TRUE ) 
+message( " ✔ Ranked gene list length: ", length(gene_list) )
+
+# GSEA becomes unreliable with very small ranked gene lists
+if (length(gene_list) < 20) { 
+  message( " ⏭ Skipping GSEA: too few genes" ) 
+  next }
+
+
+# Run Reactome pathway GSEA
+message( " ▶ Running Reactome GSEA..." ) 
+gsea_res <- tryCatch( gsePathway( geneList = gene_list, organism = "human", eps = 0, verbose = FALSE ),
+                      error = function(e) { 
+                        message( " ❌ GSEA FAILED: ", e$message ) 
+                        return(NULL) } )
+
+# Check whether pathway results were obtained
+if ( is.null(gsea_res) || nrow(gsea_res@result) == 0 ) { 
+  message( " ⏭ No pathway results" ) 
+  next }
+
+# Convert ENTREZ IDs back to readable gene names
+gsea_res <- setReadable( gsea_res, OrgDb = org.Hs.eg.db, keyType = "ENTREZID" )
+```
+Before pathway analysis, the MAST results were checked for the required gene and avg_log2FC columns. Gene symbols were converted to ENTREZ IDs using clusterProfiler and org.Hs.eg.db, as required for Reactome pathway analysis. For each cell type, genes were ranked according to their MAST avg_log2FC values from the Tumor vs Normal comparison. Positive values represent relatively higher expression in Tumor cells, whereas negative values represent relatively higher expression in Normal cells.    
+The ranked gene list was used as input for Gene Set Enrichment Analysis (GSEA) with the Reactome pathway database using ReactomePA::gsePathway(). Unlike an over-representation analysis based only on significant DEGs, GSEA evaluates the position of genes across the complete ranked list to identify pathways whose member genes are concentrated toward either end of the ranking.
+A positive Normalized Enrichment Score (NES) indicates enrichment toward the Tumor-upregulated end of the ranked list, while a negative NES indicates enrichment toward the Normal-upregulated end.    
+Finally, ENTREZ IDs in the GSEA results were converted back to readable gene symbols for easier interpretation and reporting.    
+
 
 
 
