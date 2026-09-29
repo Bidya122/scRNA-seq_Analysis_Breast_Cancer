@@ -2368,6 +2368,35 @@ The ranked gene list was used as input for Gene Set Enrichment Analysis (GSEA) w
 A positive Normalized Enrichment Score (NES) indicates enrichment toward the Tumor-upregulated end of the ranked list, while a negative NES indicates enrichment toward the Normal-upregulated end.    
 Finally, ENTREZ IDs in the GSEA results were converted back to readable gene symbols for easier interpretation and reporting.    
 
+```bash
+# Extract clean pathway result table
+pathways <- gsea_res@result %>% 
+  filter( 
+    !is.na(Description), 
+    !is.na(NES), 
+    !is.na(p.adjust), 
+    !is.na(setSize) ) 
+message( " ✔ Valid pathways: ", nrow(pathways) ) 
+if (nrow(pathways) == 0) 
+  next
+
+# Add metadata
+pathways$CellType <- celltype 
+pathways$Condition <- condition # Add current cell type pathways to the master dataframe 
+all_pathways_df <- rbind( all_pathways_df, pathways )
+
+# Save pathway results for each cell type
+out_csv <- file.path( phase1Dir, paste0( celltype_clean, "_Reactome_GSEA_", condition, ".csv" ) )
+write.csv( pathways, out_csv, row.names = FALSE ) 
+message( " ✔ GSEA CSV written for ", celltype ) }
+
+# Final combined Reactome GSEA results
+message("\n==============================") 
+message("✔ Reactome GSEA completed for all cell types") 
+message( "✔ Total pathway results: ", nrow(all_pathways_df) )
+```
+The Reactome GSEA output was filtered to retain pathway entries with valid pathway descriptions, Normalized Enrichment Scores (NES), adjusted p-values, and pathway sizes. Each pathway result was annotated with its corresponding cell type and comparison (Tumor_vs_Normal). Results from individual cell types were then combined into a master dataframe for downstream comparison and visualization. Separate CSV files were also generated for each cell type, containing the corresponding Reactome pathway enrichment results. The final output therefore included both cell-type-specific pathway result files and a combined table containing results across all analyzed cell types.    
+
 
 
 
