@@ -2397,6 +2397,15 @@ message( "✔ Total pathway results: ", nrow(all_pathways_df) )
 ```
 The Reactome GSEA output was filtered to retain pathway entries with valid pathway descriptions, Normalized Enrichment Scores (NES), adjusted p-values, and pathway sizes. Each pathway result was annotated with its corresponding cell type and comparison (Tumor_vs_Normal). Results from individual cell types were then combined into a master dataframe for downstream comparison and visualization. Separate CSV files were also generated for each cell type, containing the corresponding Reactome pathway enrichment results. The final output therefore included both cell-type-specific pathway result files and a combined table containing results across all analyzed cell types.    
 
+<img width="1507" height="675" alt="image" src="https://github.com/user-attachments/assets/a687e7e3-b3fd-4e45-aa91-06ebacf77207" />
+
+Reactome pathway GSEA was successfully performed for 19 of the 20 cell types included in the MAST Tumor vs Normal analysis. For each cell type, the complete ranked gene list from the MAST results was used to identify Reactome pathways whose genes were non-randomly concentrated toward the Tumor-upregulated or Normal-upregulated end of the ranking.    
+The resulting pathway tables contain enrichment statistics including the Normalized Enrichment Score (NES), adjusted p-values, and pathway size. The direction of NES was used to distinguish the condition associated with pathway enrichment:    
+Positive NES: pathway genes are enriched toward the Tumor-upregulated end of the ranked gene list.    
+Negative NES: pathway genes are enriched toward the Normal-upregulated end of the ranked gene list.    
+These results provide a pathway-level view of the transcriptional differences identified by MAST and allow biological processes to be compared across different breast cancer cell types.    
+
+
 
 
 
