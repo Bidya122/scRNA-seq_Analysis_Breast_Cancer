@@ -2556,6 +2556,92 @@ write.csv( all_pathways_df, file.path(
     phase1Dir,
     "All_CellTypes_Reactome_GSEA_results.csv" ), row.names = FALSE)
 ```
+
+[PLOTS CAN BE SEEN HERE]()
+
+```bash
+# Combined Reactome GSEA Dot Plot Top 3 pathways per cell type
+library(dplyr)
+library(ggplot2)
+
+# 1. Select top 3 pathways per cell type
+top_gsea_all <- all_pathways_df %>%
+  filter(
+    !is.na(CellType),
+    !is.na(Description),
+    !is.na(NES),
+    !is.na(p.adjust),
+    !is.na(setSize)
+  ) %>%
+  group_by(CellType) %>%
+  arrange(desc(abs(NES)), .by_group = TRUE) %>%
+  slice_head(n = 3) %>%
+  ungroup()
+
+# 2. Shorten pathway names if needed
+top_gsea_all <- top_gsea_all %>%
+  mutate(
+    Pathway = ifelse(
+      nchar(Description) > 70,
+      paste0(substr(Description, 1, 67), "..."),
+      Description )
+  )
+
+# 3. Order pathways by mean absolute NES
+
+pathway_order <- top_gsea_all %>%
+  group_by(Pathway) %>%
+  summarise(
+    mean_abs_NES = mean(abs(NES), na.rm = TRUE),
+    .groups = "drop" ) %>%
+  arrange(mean_abs_NES) %>%
+  pull(Pathway)
+
+top_gsea_all$Pathway <- factor(
+  top_gsea_all$Pathway,
+  levels = pathway_order)
+
+
+# 4. Order cell types
+
+top_gsea_all$CellType <- factor(
+  top_gsea_all$CellType,
+  levels = unique(top_gsea_all$CellType))
+
+# 5. Create combined dot plot
+
+p_combined <- ggplot(
+  top_gsea_all, aes( x = NES, y = Pathway, size = setSize, color = p.adjust )) +
+  geom_point(alpha = 1.0) +
+  facet_grid( . ~ CellType, scales = "free_x", space = "free_x" ) +
+  geom_vline( xintercept = 0, linetype = "dashed" ) +
+  theme_minimal() +
+  theme( axis.text.y = element_text( size = 15 ),
+    axis.text.x = element_text( size = 15, angle = 45,  hjust = 1 ),
+    strip.text = element_text( size = 15, face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.spacing = unit(0.4, "lines") ) +
+  labs(
+    title = "Top Reactome Pathways Across Cell Types",
+    subtitle = "Top 3 pathways per cell type ranked by absolute NES",
+    x = "Normalized Enrichment Score (NES)",
+    y = "Reactome Pathway",
+    size = "Pathway Size",
+    color = "Adjusted p-value" )
+
+# 6. Save PNG
+
+combined_png <- file.path( phase1Dir, "All_CellTypes_Top3_Reactome_GSEA.png")
+combined_png
+
+png( combined_png, width = 40, height = 20, units = "in", res = 600)
+print(p_combined)
+
+dev.off()
+
+message( "✔ Combined GSEA plot saved: ", combined_png)
+```
+
 <img width="1852" height="931" alt="image" src="https://github.com/user-attachments/assets/6abc0b52-3d7f-4f54-ad99-45afd3ef9ad2" />
 
 To summarize the Reactome GSEA results across cell types, the three pathways with the largest absolute Normalized Enrichment Score (NES) were selected for each of the 19 cell types with significant Reactome enrichment results. These results were visualized in a combined dot plot. In the plot, the NES represents the direction and magnitude of pathway enrichment. Positive NES values indicate enrichment toward genes that were upregulated in Tumor cells, whereas negative NES values indicate enrichment toward genes that were upregulated in Normal cells. The size of each dot represents the number of genes contributing to the pathway (setSize), while dot color represents the adjusted p-value (p.adjust). Importantly, NES direction indicates enrichment of the ranked gene set, rather than directly demonstrating pathway activation or inhibition. The complete pathway-level results are provided in All_CellTypes_Reactome_GSEA_Tumor_vs_Normal.csv. CD8_Tem is not represented in this visualization because no Reactome pathway met the applied GSEA significance criteria for this cell type.         
