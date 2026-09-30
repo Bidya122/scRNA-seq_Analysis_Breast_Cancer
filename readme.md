@@ -2046,6 +2046,9 @@ GSE245601_phase1.write( "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE
 
 Following the Python-based preprocessing, Harmony integration, and CellTypist cell-type annotation, I am continuing GSE245601 breast cancer scRNA-seq analysis in R after Python-based Harmony integration and CellTypist annotation. Currently assessing Normal vs Tumor cell-type composition and preparing cell-type-specific differential expression analysis.    
 
+[FIND THE R-SCRIPT HERE](https://github.com/Bidya122/scRNA-seq_Analysis_Breast_Cancer/blob/main/04_GSE245601_Breast_Cancer_Phase1.Rmd)
+
+
 ```bash
 #Set the directories
 base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
