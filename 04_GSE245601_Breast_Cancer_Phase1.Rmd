@@ -1,0 +1,596 @@
+---
+title: "04_GSE245601_Breast_Cancer_Phase1"
+author: "Bidya_Mohanty"
+date: "2026-09-23"
+output: html_document
+---
+
+```{r setwd}
+base_dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer"  ##create directory
+outputDir<- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Output"
+plotDir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Plots"
+phase1Dir <- "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1"
+
+dir.create(phase1Dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r Libraries}
+library(zellkonverter)
+library(SingleCellExperiment)
+library(Seurat)
+library(MAST)
+library(tidyverse)
+library(org.Hs.eg.db)
+library(clusterProfiler)
+library(ReactomePA)
+library(dplyr)
+```
+
+```{r uploading the files}
+sce <- readH5AD("D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.h5ad") ## readH5AD() converts it into a SingleCellExperiment (SCE) object in R
+
+####you will see some messages like:
+#ℹ Using stored X_name value 'counts'
+#<sys>:0: FutureWarning: Use varm (e.g. `k in adata.varm` or `adata.varm.keys() | {'u'}`) instead of AnnData.varm_keys, AnnData.varm_keys is deprecated and will be removed in the future.
+#<sys>:0: FutureWarning: Use obsm (e.g. `k in adata.obsm` or `adata.obsm.keys() | {'u'}`) instead of AnnData.obsm_keys, AnnData.obsm_keys is deprecated and will be removed in the future.
+
+seurat_obj <- as.Seurat(sce, counts = "counts", data = "logcounts")  # Convert the SingleCellExperiment object into a Seurat object
+
+saveRDS(seurat_obj, "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.rds") # Save the Seurat object as an .rds file. saveRDS() stores the object in compressed R format, so you can reload it later without repeating conversion steps
+```
+
+#--------------------------------Load the RDS--------------------------------------------
+```{r Cleaning and standardizing Annotations}
+seurat_obj <- readRDS( "D:/Bidya Work/single/GSE245601_Breast_Cancer/Phase1/GSE245601_phase1_celltypist.rds")
+colnames(seurat_obj@meta.data)
+sort(table(seurat_obj$celltype_condition), decreasing = TRUE)
+head(seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condition")])
+seurat_obj$celltype <- sub(  "_(Normal|Tumor)$", "", seurat_obj$celltype_condition)
+head( seurat_obj@meta.data[, c( "Condition", "majority_voting", "celltype_condition", "celltype" )])
+Assays(seurat_obj) # "originalexp"
+DefaultAssay(seurat_obj) <- "originalexp"
+
+```
+
+
+```{r Cell Type-Specific Differential Expression Analysis Using MAST}
+run_mast_per_celltype_Tumor_vs_Normal <- function( seu,
+  celltype_col = "majority_voting",
+  condition_col = "Condition",
+  min_cells_per_group = 20) {
+
+  dir.create(phase1Dir, showWarnings = FALSE, recursive = TRUE)
+
+  meta <- seu@meta.data
+  celltypes <- sort(unique(meta[[celltype_col]]))
+
+  for (ct in celltypes) {
+
+    cat("\n▶ Processing cell type:", ct, "\n")
+
+    cells_ct <- rownames(meta)[meta[[celltype_col]] == ct]
+
+    cond_tab <- table(meta[cells_ct, condition_col])
+    print(cond_tab)
+
+    # Check whether both Tumor and Normal are present
+    if (!all(c("Tumor", "Normal") %in% names(cond_tab))) {
+      cat("  ❌ Tumor or Normal missing → skipping\n")
+      next}
+
+    # Check minimum cell count
+    if (any(cond_tab[c("Tumor", "Normal")] < min_cells_per_group)) {
+      cat("  ❌ Not enough cells → skipping\n")
+      next}
+
+    # Subset to the current cell type
+    seu_ct <- subset(seu, cells = cells_ct)
+
+    # Use original expression assay
+    DefaultAssay(seu_ct) <- "originalexp"
+
+    # Normalize expression data
+    seu_ct <- NormalizeData(seu_ct, verbose = FALSE)
+
+    # Set identities to Normal/Tumor
+    Idents(seu_ct) <- condition_col
+
+    # Run MAST: Tumor vs Normal
+    deg <- FindMarkers(
+      seu_ct,
+      ident.1 = "Tumor",
+      ident.2 = "Normal",
+      test.use = "MAST",
+      logfc.threshold = 0,  # -> tests all genes regardless of fold change
+      min.pct = 0.1,         # -> gene must be expressed in at least 10% of cells
+      latent.vars = c("nCount_RNA", "percent.mt"))  # latent.vars-> adjusts for technical confounders: nCount_RNA = sequencing depth, percent.mt = mitochondrial gene percentage
+
+
+    # Add gene names as a column
+    deg$gene <- rownames(deg)
+
+    # Clean cell type name for filename
+    ct_clean <- gsub("[^a-zA-Z0-9]", "_", ct)
+
+    # Output filename
+    out_file <- file.path(  phase1Dir, paste0("DEG_", ct_clean, "_Tumor_vs_Normal.csv"))
+
+    # Save DEG table
+    write.csv(deg, out_file, row.names = FALSE)
+
+    cat("  ✔ Saved:", out_file, "\n")
+  }
+}
+
+run_mast_per_celltype_Tumor_vs_Normal(seurat_obj)
+
+```
+
+```{r}
+# List the MAST result CSV files
+mast_files <- list.files( phase1Dir, pattern = "^DEG_.*_Tumor_vs_Normal\\.csv$", full.names = TRUE)
+
+length(mast_files)
+basename(mast_files)
+
+##Sanity Check
+
+meta <- seurat_obj@meta.data
+
+celltypes <- sort(unique(meta[["majority_voting"]]))
+
+skipped_celltypes <- c()
+
+for (ct in celltypes) {
+
+  cells_ct <- rownames(meta)[meta[["majority_voting"]] == ct]
+
+  cond_tab <- table(meta[cells_ct, "Condition"])
+
+  tumor_n  <- if ("Tumor" %in% names(cond_tab)) cond_tab["Tumor"] else 0
+  normal_n <- if ("Normal" %in% names(cond_tab)) cond_tab["Normal"] else 0
+
+  # MAST required at least 20 cells in BOTH groups
+  if (tumor_n < 20 || normal_n < 20) {
+    skipped_celltypes <- c(skipped_celltypes, ct)
+  }
+}
+
+cat("Total cell types:", length(celltypes), "\n")
+cat("Cell types skipped from MAST:", length(skipped_celltypes), "\n")
+cat("Cell types analyzed by MAST:", length(celltypes) - length(skipped_celltypes), "\n")
+
+skipped_celltypes
+```
+
+```{r Summerizing the MAST result}
+deg_summary <- data.frame(
+  CellType = character(),
+  Tumor_upregulated = integer(),
+  Normal_upregulated = integer(),
+  Total_DEGs = integer(),
+  stringsAsFactors = FALSE
+)
+
+for (file in mast_files) { deg_data <- read.csv( file, stringsAsFactors = FALSE)
+
+  # Check required columns
+  if (!all(c("avg_log2FC", "p_val_adj") %in% colnames(deg_data))) {
+
+    warning(
+      paste(
+        "Skipping file because required columns are missing:",
+        basename(file) ) )
+
+    next
+  }
+
+  # Significant Tumor-upregulated genes
+  tumor_up <- sum(
+    deg_data$avg_log2FC > 0 &
+    deg_data$p_val_adj < 0.05,
+    na.rm = TRUE )
+
+  # Significant Normal-upregulated genes
+  normal_up <- sum(
+    deg_data$avg_log2FC < 0 &
+    deg_data$p_val_adj < 0.05,
+    na.rm = TRUE )
+
+  # Extract cell type from filename
+  celltype <- sub( "^DEG_(.*)_Tumor_vs_Normal\\.csv$",  "\\1", basename(file) )
+
+  # Add to summary
+  deg_summary <- rbind(
+    deg_summary,
+    data.frame(
+      CellType = celltype,
+      Tumor_upregulated = tumor_up,
+      Normal_upregulated = normal_up,
+      Total_DEGs = tumor_up + normal_up
+    )
+  )
+}
+
+
+# --------------------------------------------------
+# Sort by total number of DEGs
+# --------------------------------------------------
+
+deg_summary <- deg_summary %>%
+  arrange(desc(Total_DEGs))
+
+print(deg_summary)
+
+write.csv( deg_summary, file.path( phase1Dir, "GSE245601_DEGsummary_Tumor_vs_Normal.csv" ), row.names = FALSE)
+```
+
+```{r Reactome GSEA for MAST results}
+# List the MAST result CSV files 
+#All the mast csv files I put into another folder called Tumor vs Normal inside phase1 Directory 
+mast_dir <- file.path(phase1Dir, "Tumor vs Normal")
+mast_files <- list.files(  mast_dir, pattern = "^DEG_.*_Tumor_vs_Normal\\.csv$", full.names = TRUE)
+length(mast_files)
+
+gsea_dir <- file.path(phase1Dir, "GSEA")
+dir.create( gsea_dir, showWarnings = FALSE, recursive = TRUE)
+gsea_files <- list.files( gsea_dir, pattern = "_Reactome_GSEA_Tumor_vs_Normal\\.csv$", full.names = TRUE)
+length(gsea_files)
+
+all_pathways_df <- data.frame() # Create empty dataframe to store Reactome pathway enrichment # results from ALL cell types together
+
+for (file_path in mast_files)
+  { file_name <- basename(file_path) 
+  message("\n==============================") 
+  message("▶ Processing file: ", file_name)
+  
+ # Extract cell type name from filename # Example: # DEG_LummHR_major_Tumor_vs_Normal.csv # → LummHR_major 
+
+celltype <- sub( "^DEG_(.*?)_Tumor_vs_Normal\\.csv$", "\\1", file_name ) 
+if (celltype == file_name) 
+{ warning("⚠ Celltype extraction FAILED for file: ", file_name) 
+  next }
+
+celltype_clean <- gsub( "[^a-zA-Z0-9]", "_", celltype ) 
+condition <- "Tumor_vs_Normal" 
+message(" ✔ Cell type identified: ", celltype)
+
+# Read MAST DEG file
+res <- tryCatch( read.csv( file_path, stringsAsFactors = FALSE ), 
+                 error = function(e) { 
+                   message( " ❌ Failed to read file: ", e$message ) 
+                   return(NULL) } ) 
+
+if (is.null(res)) next 
+message( " ✔ DEG rows read: ", 
+         nrow(res) )
+
+# Verify required columns exist # gene = gene symbols # avg_log2FC = Tumor vs Normal fold change
+
+if (!all( c("gene", "avg_log2FC") %in% colnames(res) )) { 
+  warning( " ⚠ Missing required columns in: ", 
+             file_name ) 
+  next 
+  }
+
+# Convert Gene SYMBOLs → ENTREZ IDs # Reactome GSEA requires ENTREZ IDs
+
+ncbi_map <- suppressMessages( clusterProfiler::bitr( res$gene, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Hs.eg.db ) ) 
+message( " ✔ Genes mapped to ENTREZ: ", nrow(ncbi_map) )
+
+# Merge MAST results with ENTREZ mapping
+res_mapped <- res %>% left_join( ncbi_map, by = c("gene" = "SYMBOL") ) %>% filter( !is.na(ENTREZID) ) %>% 
+  distinct( ENTREZID, .keep_all = TRUE ) 
+message( " ✔ Genes after filtering: ", nrow(res_mapped) )
+
+# Create ranked gene list for GSEA # # Positive avg_log2FC: # → higher expression in Tumor # # Negative avg_log2FC: # → higher expression in Normal
+gene_list <- res_mapped$avg_log2FC 
+names(gene_list) <- res_mapped$ENTREZID # Sort genes from highest positive logFC to most negative logFC 
+gene_list <- sort( gene_list, decreasing = TRUE ) 
+message( " ✔ Ranked gene list length: ", length(gene_list) )
+
+# GSEA becomes unreliable with very small ranked gene lists
+if (length(gene_list) < 20) { 
+  message( " ⏭ Skipping GSEA: too few genes" ) 
+  next }
+
+
+# Run Reactome pathway GSEA
+message( " ▶ Running Reactome GSEA..." ) 
+gsea_res <- tryCatch( gsePathway( geneList = gene_list, organism = "human", eps = 0, verbose = FALSE ),
+                      error = function(e) { 
+                        message( " ❌ GSEA FAILED: ", e$message ) 
+                        return(NULL) } )
+
+# Check whether pathway results were obtained
+if ( is.null(gsea_res) || nrow(gsea_res@result) == 0 ) { 
+  message( " ⏭ No pathway results" ) 
+  next }
+
+# Convert ENTREZ IDs back to readable gene names
+gsea_res <- setReadable( gsea_res, OrgDb = org.Hs.eg.db, keyType = "ENTREZID" )
+
+# Extract clean pathway result table
+pathways <- gsea_res@result %>% 
+  filter( 
+    !is.na(Description), 
+    !is.na(NES), 
+    !is.na(p.adjust), 
+    !is.na(setSize) ) 
+message( " ✔ Valid pathways: ", nrow(pathways) ) 
+if (nrow(pathways) == 0) 
+  next
+
+# Add metadata
+pathways$CellType <- celltype 
+pathways$Condition <- condition # Add current cell type pathways to the master dataframe 
+all_pathways_df <- rbind( all_pathways_df, pathways )
+
+# Save pathway results for each cell type
+out_csv <- file.path( gsea_dir, paste0( celltype_clean, "_Reactome_GSEA_", condition, ".csv" ) )
+write.csv( pathways, out_csv, row.names = FALSE ) 
+message( " ✔ GSEA CSV written for ", celltype ) }
+
+# Final combined Reactome GSEA results
+message("\n==============================") 
+message("✔ Reactome GSEA completed for all cell types") 
+message( "✔ Total pathway results: ", nrow(all_pathways_df) )
+
+combined_out <- file.path( phase1Dir, "All_CellTypes_Reactome_GSEA_Tumor_vs_Normal.csv")
+
+write.csv( all_pathways_df, combined_out, row.names = FALSE)
+
+
+```
+
+
+```{r check the missing one}
+mast_celltypes <- sub( "^DEG_(.*?)_Tumor_vs_Normal\\.csv$", "\\1", basename(mast_files))
+
+gsea_celltypes <- sub( "_Reactome_GSEA_Tumor_vs_Normal\\.csv$", "", basename(gsea_files))
+
+setdiff(mast_celltypes, gsea_celltypes)
+
+cd8_file <- mast_files[ grepl("DEG_CD8_Tem_Tumor_vs_Normal\\.csv$", mast_files)]
+cd8_file
+
+cd8_res <- read.csv(cd8_file, stringsAsFactors = FALSE)
+
+nrow(cd8_res)
+head(cd8_res)
+
+cd8_map <- suppressMessages(
+  clusterProfiler::bitr(
+    cd8_res$gene,
+    fromType = "SYMBOL",
+    toType = "ENTREZID",
+    OrgDb = org.Hs.eg.db
+  )
+)
+
+nrow(cd8_map)
+
+cd8_mapped <- cd8_res %>%
+  left_join(cd8_map, by = c("gene" = "SYMBOL")) %>%
+  filter(!is.na(ENTREZID)) %>%
+  distinct(ENTREZID, .keep_all = TRUE)
+
+nrow(cd8_mapped)
+
+cd8_gene_list <- cd8_mapped$avg_log2FC
+names(cd8_gene_list) <- cd8_mapped$ENTREZID
+cd8_gene_list <- sort(cd8_gene_list, decreasing = TRUE)
+
+length(cd8_gene_list)
+
+cd8_gsea <- tryCatch(
+  gsePathway(
+    geneList = cd8_gene_list,
+    organism = "human",
+    eps = 0,
+    verbose = FALSE ),
+  error = function(e) {
+    message("GSEA FAILED: ", e$message)
+    return(NULL)
+  }
+)
+
+```
+
+``` {r Reactome GSEA Pathway Visualization}
+
+combined_out <- file.path(phase1Dir, "All_CellTypes_Reactome_GSEA_Tumor_vs_Normal.csv")
+all_pathways_df <- read.csv( combined_out, stringsAsFactors = FALSE)
+dim(all_pathways_df)
+head(all_pathways_df)
+unique(all_pathways_df$CellType)
+
+# Create empty vector to store paths of generated GSEA pathway plot PNG files
+gsea_png_files <- c()
+
+# --------------------------------------------------
+# Loop through each unique cell type present in the combined Reactome GSEA pathway dataframe
+# --------------------------------------------------
+
+for (ct in unique(all_pathways_df$CellType)) {
+  
+  # Extract pathway enrichment results for current cell type
+  df_ct <- all_pathways_df %>%
+    filter(CellType == ct)
+  
+  # Skip plotting if no pathways exist
+  if (nrow(df_ct) == 0) {
+    message(" No pathways to plot for: ", ct)
+    next
+  }
+  
+  # --------------------------------------------------
+  # Select top 10 pathways
+  # --------------------------------------------------
+  
+  # NES = Normalized Enrichment Score
+  # Positive NES = enrichment toward Tumor-upregulated genes
+  # Negative NES = enrichment toward Normal-upregulated genes
+  # abs(NES) selects the strongest enrichment signals
+  # regardless of direction
+  
+  top_pathways <- df_ct %>%
+    arrange(desc(abs(NES))) %>%
+    slice_head(n = 10)
+  
+  if (nrow(top_pathways) == 0) next
+  
+  # --------------------------------------------------
+  # Reorder pathway names according to NES
+  # --------------------------------------------------
+  # Pathways with lower NES appear at the bottom, while pathways with higher NES appear at the top
+  
+  top_pathways$Description <- factor( top_pathways$Description, levels = top_pathways$Description[ order(top_pathways$NES) ] )
+  
+  # --------------------------------------------------
+  # Create pathway enrichment dot plot
+  # --------------------------------------------------
+  
+  # X-axis   : NES = enrichment direction and strength
+  # Y-axis   : pathway names
+  # Color    : adjusted p-value
+  # Size     : pathway gene-set size
+  
+  p <- ggplot( top_pathways, aes( x = NES, y = Description, color = p.adjust, size = setSize ) ) +
+    geom_point() +
+    theme_minimal() +
+    theme(
+      axis.text.y = element_text(size = 7, face = "bold"),
+      axis.text.x = element_text(size = 7, face = "bold")
+    )
+  
+  # --------------------------------------------------
+  # Save PNG
+  # --------------------------------------------------
+  
+  # Clean cell type name for safe file naming
+  ct_clean <- gsub("[^a-zA-Z0-9]", "_", ct)
+  
+  png_file <- file.path( gsea_dir, paste0(ct_clean, ".png") )
+  
+  png( png_file, width = 9, height = 6,  units = "in", res = 600 )
+  
+  print(p)
+  dev.off()
+  
+  # Store generated PNG path
+  gsea_png_files <- c( gsea_png_files, png_file )
+}
+
+# --------------------------------------------------
+# Save combined Reactome GSEA results
+# --------------------------------------------------
+
+write.csv( all_pathways_df, file.path(
+    phase1Dir,
+    "All_CellTypes_Reactome_GSEA_results.csv" ), row.names = FALSE)
+```
+
+```{r Combined Reactome GSEA plot Top 3 pathways per cell type}
+
+# Combined Reactome GSEA Dot Plot Top 3 pathways per cell type
+library(dplyr)
+library(ggplot2)
+
+# 1. Select top 3 pathways per cell type
+top_gsea_all <- all_pathways_df %>%
+  filter(
+    !is.na(CellType),
+    !is.na(Description),
+    !is.na(NES),
+    !is.na(p.adjust),
+    !is.na(setSize)
+  ) %>%
+  group_by(CellType) %>%
+  arrange(desc(abs(NES)), .by_group = TRUE) %>%
+  slice_head(n = 3) %>%
+  ungroup()
+
+# 2. Shorten pathway names if needed
+top_gsea_all <- top_gsea_all %>%
+  mutate(
+    Pathway = ifelse(
+      nchar(Description) > 70,
+      paste0(substr(Description, 1, 67), "..."),
+      Description )
+  )
+
+# 3. Order pathways by mean absolute NES
+
+pathway_order <- top_gsea_all %>%
+  group_by(Pathway) %>%
+  summarise(
+    mean_abs_NES = mean(abs(NES), na.rm = TRUE),
+    .groups = "drop" ) %>%
+  arrange(mean_abs_NES) %>%
+  pull(Pathway)
+
+top_gsea_all$Pathway <- factor(
+  top_gsea_all$Pathway,
+  levels = pathway_order)
+
+
+# 4. Order cell types
+
+top_gsea_all$CellType <- factor(
+  top_gsea_all$CellType,
+  levels = unique(top_gsea_all$CellType))
+
+# 5. Create combined dot plot
+
+p_combined <- ggplot(
+  top_gsea_all, aes( x = NES, y = Pathway, size = setSize, color = p.adjust )) +
+  geom_point(alpha = 1.0) +
+  facet_grid( . ~ CellType, scales = "free_x", space = "free_x" ) +
+  geom_vline( xintercept = 0, linetype = "dashed" ) +
+  theme_minimal() +
+  theme( axis.text.y = element_text( size = 15 ),
+    axis.text.x = element_text( size = 15, angle = 45,  hjust = 1 ),
+    strip.text = element_text( size = 15, face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.spacing = unit(0.4, "lines") ) +
+  labs(
+    title = "Top Reactome Pathways Across Cell Types",
+    subtitle = "Top 3 pathways per cell type ranked by absolute NES",
+    x = "Normalized Enrichment Score (NES)",
+    y = "Reactome Pathway",
+    size = "Pathway Size",
+    color = "Adjusted p-value" )
+
+# 6. Save PNG
+
+combined_png <- file.path( phase1Dir, "All_CellTypes_Top3_Reactome_GSEA.png")
+combined_png
+
+png( combined_png, width = 40, height = 20, units = "in", res = 600)
+print(p_combined)
+
+dev.off()
+
+message( "✔ Combined GSEA plot saved: ", combined_png)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
