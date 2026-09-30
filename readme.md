@@ -2403,7 +2403,68 @@ Reactome pathway GSEA was successfully performed for 19 of the 20 cell types inc
 The resulting pathway tables contain enrichment statistics including the Normalized Enrichment Score (NES), adjusted p-values, and pathway size. The direction of NES was used to distinguish the condition associated with pathway enrichment:    
 Positive NES: pathway genes are enriched toward the Tumor-upregulated end of the ranked gene list.    
 Negative NES: pathway genes are enriched toward the Normal-upregulated end of the ranked gene list.    
-These results provide a pathway-level view of the transcriptional differences identified by MAST and allow biological processes to be compared across different breast cancer cell types.    
+These results provide a pathway-level view of the transcriptional differences identified by MAST and allow biological processes to be compared across different breast cancer cell types.   
+
+```bash
+mast_celltypes <- sub( "^DEG_(.*?)_Tumor_vs_Normal\\.csv$", "\\1", basename(mast_files))
+
+gsea_celltypes <- sub( "_Reactome_GSEA_Tumor_vs_Normal\\.csv$", "", gsea_files)
+
+setdiff(mast_celltypes, gsea_celltypes)
+
+cd8_file <- mast_files[ grepl("DEG_CD8_Tem_Tumor_vs_Normal\\.csv$", mast_files)]
+cd8_file
+
+cd8_res <- read.csv(cd8_file, stringsAsFactors = FALSE)
+
+nrow(cd8_res)
+head(cd8_res)
+
+cd8_map <- suppressMessages(
+  clusterProfiler::bitr(
+    cd8_res$gene,
+    fromType = "SYMBOL",
+    toType = "ENTREZID",
+    OrgDb = org.Hs.eg.db
+  )
+)
+
+nrow(cd8_map)
+
+cd8_mapped <- cd8_res %>%
+  left_join(cd8_map, by = c("gene" = "SYMBOL")) %>%
+  filter(!is.na(ENTREZID)) %>%
+  distinct(ENTREZID, .keep_all = TRUE)
+
+nrow(cd8_mapped)
+
+cd8_gene_list <- cd8_mapped$avg_log2FC
+names(cd8_gene_list) <- cd8_mapped$ENTREZID
+cd8_gene_list <- sort(cd8_gene_list, decreasing = TRUE)
+
+length(cd8_gene_list)
+
+cd8_gsea <- tryCatch(
+  gsePathway(
+    geneList = cd8_gene_list,
+    organism = "human",
+    eps = 0,
+    verbose = FALSE ),
+  error = function(e) {
+    message("GSEA FAILED: ", e$message)
+    return(NULL)
+  }
+)
+```
+<img width="1362" height="200" alt="image" src="https://github.com/user-attachments/assets/c4d08d16-e8ec-46f5-809b-3eebf4f34562" />
+
+<img width="802" height="426" alt="image" src="https://github.com/user-attachments/assets/e33ee818-eaa6-4471-9180-ecc5979c81a7" />
+
+Reactome GSEA was performed for the cell types with sufficient MAST DEG results using the same analysis settings. A completeness check identified CD8_Tem as the only cell type with a MAST DEG result but without a corresponding GSEA output file. The CD8_Tem DEG list contained 3,383 genes, of which 3,349 were successfully mapped to Entrez IDs and used for GSEA. However, no Reactome pathway met the default significance criteria applied by gsePathway(). Consequently, the resulting pathway table contained no valid enriched pathways, and the workflow skipped CD8_Tem rather than generating an empty GSEA result file. Thus, the final Reactome GSEA output contains 19 cell types, while CD8_Tem is documented as having no significantly enriched Reactome pathways under the applied criteria.    
+
+
+
+
 
 -------------------------------------------------------------------------
 Reactome GSEA results were obtained for 19 of the 20 cell types included in the MAST analysis.
