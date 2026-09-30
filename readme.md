@@ -2462,6 +2462,105 @@ cd8_gsea <- tryCatch(
 
 Reactome GSEA was performed for the cell types with sufficient MAST DEG results using the same analysis settings. A completeness check identified CD8_Tem as the only cell type with a MAST DEG result but without a corresponding GSEA output file. The CD8_Tem DEG list contained 3,383 genes, of which 3,349 were successfully mapped to Entrez IDs and used for GSEA. However, no Reactome pathway met the default significance criteria applied by gsePathway(). Consequently, the resulting pathway table contained no valid enriched pathways, and the workflow skipped CD8_Tem rather than generating an empty GSEA result file. Thus, the final Reactome GSEA output contains 19 cell types, while CD8_Tem is documented as having no significantly enriched Reactome pathways under the applied criteria.    
 
+## 14. GSEA Plots Visualization
+
+```bash
+combined_out <- file.path(phase1Dir, "All_CellTypes_Reactome_GSEA_Tumor_vs_Normal.csv")
+all_pathways_df <- read.csv( combined_out, stringsAsFactors = FALSE)
+dim(all_pathways_df)
+head(all_pathways_df)
+unique(all_pathways_df$CellType)
+
+# Create empty vector to store paths of generated GSEA pathway plot PNG files
+gsea_png_files <- c()
+
+# --------------------------------------------------
+# Loop through each unique cell type present in the combined Reactome GSEA pathway dataframe
+# --------------------------------------------------
+
+for (ct in unique(all_pathways_df$CellType)) {
+  
+  # Extract pathway enrichment results for current cell type
+  df_ct <- all_pathways_df %>%
+    filter(CellType == ct)
+  
+  # Skip plotting if no pathways exist
+  if (nrow(df_ct) == 0) {
+    message(" No pathways to plot for: ", ct)
+    next
+  }
+  
+  # --------------------------------------------------
+  # Select top 10 pathways
+  # --------------------------------------------------
+  
+  # NES = Normalized Enrichment Score
+  # Positive NES = enrichment toward Tumor-upregulated genes
+  # Negative NES = enrichment toward Normal-upregulated genes
+  # abs(NES) selects the strongest enrichment signals
+  # regardless of direction
+  
+  top_pathways <- df_ct %>%
+    arrange(desc(abs(NES))) %>%
+    slice_head(n = 10)
+  
+  if (nrow(top_pathways) == 0) next
+  
+  # --------------------------------------------------
+  # Reorder pathway names according to NES
+  # --------------------------------------------------
+  # Pathways with lower NES appear at the bottom, while pathways with higher NES appear at the top
+  
+  top_pathways$Description <- factor( top_pathways$Description, levels = top_pathways$Description[ order(top_pathways$NES) ] )
+  
+  # --------------------------------------------------
+  # Create pathway enrichment dot plot
+  # --------------------------------------------------
+  
+  # X-axis   : NES = enrichment direction and strength
+  # Y-axis   : pathway names
+  # Color    : adjusted p-value
+  # Size     : pathway gene-set size
+  
+  p <- ggplot( top_pathways, aes( x = NES, y = Description, color = p.adjust, size = setSize ) ) +
+    geom_point() +
+    theme_minimal() +
+    theme(
+      axis.text.y = element_text(size = 7, face = "bold"),
+      axis.text.x = element_text(size = 7, face = "bold")
+    )
+  
+  # --------------------------------------------------
+  # Save PNG
+  # --------------------------------------------------
+  
+  # Clean cell type name for safe file naming
+  ct_clean <- gsub("[^a-zA-Z0-9]", "_", ct)
+  
+  png_file <- file.path( gsea_dir, paste0(ct_clean, ".png") )
+  
+  png( png_file, width = 9, height = 6,  units = "in", res = 600 )
+  
+  print(p)
+  dev.off()
+  
+  # Store generated PNG path
+  gsea_png_files <- c( gsea_png_files, png_file )
+}
+
+# --------------------------------------------------
+# Save combined Reactome GSEA results
+# --------------------------------------------------
+
+write.csv( all_pathways_df, file.path(
+    phase1Dir,
+    "All_CellTypes_Reactome_GSEA_results.csv" ), row.names = FALSE)
+```
+<img width="1852" height="931" alt="image" src="https://github.com/user-attachments/assets/6abc0b52-3d7f-4f54-ad99-45afd3ef9ad2" />
+
+To summarize the Reactome GSEA results across cell types, the three pathways with the largest absolute Normalized Enrichment Score (NES) were selected for each of the 19 cell types with significant Reactome enrichment results. These results were visualized in a combined dot plot. In the plot, the NES represents the direction and magnitude of pathway enrichment. Positive NES values indicate enrichment toward genes that were upregulated in Tumor cells, whereas negative NES values indicate enrichment toward genes that were upregulated in Normal cells. The size of each dot represents the number of genes contributing to the pathway (setSize), while dot color represents the adjusted p-value (p.adjust). Importantly, NES direction indicates enrichment of the ranked gene set, rather than directly demonstrating pathway activation or inhibition. The complete pathway-level results are provided in All_CellTypes_Reactome_GSEA_Tumor_vs_Normal.csv. CD8_Tem is not represented in this visualization because no Reactome pathway met the applied GSEA significance criteria for this cell type.         
+
+
 
 
 
