@@ -2649,8 +2649,63 @@ message( "✔ Combined GSEA plot saved: ", combined_png)
 
 To summarize the Reactome GSEA results across cell types, the three pathways with the largest absolute Normalized Enrichment Score (NES) were selected for each of the 19 cell types with significant Reactome enrichment results. These results were visualized in a combined dot plot. In the plot, the NES represents the direction and magnitude of pathway enrichment. Positive NES values indicate enrichment toward genes that were upregulated in Tumor cells, whereas negative NES values indicate enrichment toward genes that were upregulated in Normal cells. The size of each dot represents the number of genes contributing to the pathway (setSize), while dot color represents the adjusted p-value (p.adjust). Importantly, NES direction indicates enrichment of the ranked gene set, rather than directly demonstrating pathway activation or inhibition. The complete pathway-level results are provided in All_CellTypes_Reactome_GSEA_Tumor_vs_Normal.csv. CD8_Tem is not represented in this visualization because no Reactome pathway met the applied GSEA significance criteria for this cell type.         
 
+## Cell Type Composition Analysis
 
+Cell-type composition was examined at two levels to characterize the cellular landscape of the breast cancer dataset.     
+**1. Overall Cell-Type Composition: Normal vs Tumor**    
+The CellTypist majority_voting annotations were used to calculate the number and proportion of cells belonging to each cell type within the Normal and Tumor groups. This analysis provides an overall view of the cellular composition of the two conditions. The resulting table reports: Cell type, Number of cells in Normal, Proportion of cells in Normal, Number of cells in Tumor, Proportion of cells in Tumor.         
+This gives a broad overview of how the distribution of annotated cell types differs between the Normal and Tumor groups.       
 
+<img width="1265" height="721" alt="image" src="https://github.com/user-attachments/assets/3de2b367-ec8d-4b7e-9260-7e0865ec4304" />
+
+**2. Cell-Type Composition Across Individual Samples**    
+Because cells from the same sample are not independent biological replicates, composition was also examined separately for each GSM sample. For every sample, the number of cells assigned to each cell type was calculated and divided by the total number of retained cells in that sample:     
+Cell Proportion = Cell Count / Total Cells in Sample    
+The resulting sample-level table contains the GSM identifier, condition, cell type, cell count, total cells, and proportion.    
+
+```bash
+table(seurat_obj$Condition, seurat_obj$GSM)
+sample_celltype <- seurat_obj@meta.data %>%
+  dplyr::count(GSM, Condition, majority_voting, name = "Cell_Count") %>%
+  group_by(GSM) %>%
+  mutate( Total_Cells = sum(Cell_Count), Proportion = Cell_Count / Total_Cells ) %>%
+  ungroup()
+
+head(sample_celltype, 20)
+table(sample_celltype$GSM)
+View(sample_celltype)
+write.csv( sample_celltype,
+  file.path( phase1Dir, "Sample_CellType_Composition.csv" ), row.names = FALSE)
+
+##Visualization
+sample_celltype <- sample_celltype %>%
+  mutate( GSM = factor(  GSM,  levels = c( "GSM7845546", "GSM7845548",  "GSM7845552", "GSM7845554",  "GSM7845556", "GSM7845558", "GSM7845560", "GSM7845562", "GSM7845564",  "GSM7845566", "GSM7845568", "GSM7845570"  ) )  )
+
+sample_composition_plot <- ggplot( sample_celltype, aes( x = GSM, y = Proportion, fill = majority_voting )) +
+ geom_col( width = 0.8, color = "black", linewidth = 0.2) +
+  facet_grid( ~ Condition, scales = "free_x", space = "free_x" ) +
+  scale_y_continuous( labels = scales::percent_format() ) +
+  labs( title = "Cell-Type Composition Across Individual Samples",
+    x = "Sample (GSM)",
+    y = "Cell Proportion",
+    fill = "Cell Type") +
+  theme_bw() +
+  theme(axis.text.x = element_text( angle = 45, hjust = 1 ),
+    panel.grid = element_blank())
+
+sample_composition_plot
+
+ggsave(filename = file.path( phase1Dir, "CellType_Composition_Individual_Samples.png" ),
+  plot = sample_composition_plot, width = 14,  height = 7, dpi = 300)
+```
+<img width="1846" height="923" alt="image" src="https://github.com/user-attachments/assets/ce13bdd1-555c-49d1-95b0-13b7b9ee8774" />   
+The sample-level composition analysis revealed substantial heterogeneity in cellular representation across the 12 samples. At the overall condition level, Normal samples were predominantly composed of Lumsec-basal cells (5,942/13,767; 43.2%) and LummHR-major cells (3,498/13,767; 25.4%), followed by Fibro-major cells (1,358; 9.9%) and vascular populations including Vas-capillary (692; 5.0%) and Vas-arterial (564; 4.1%).
+
+In contrast, the Tumor compartment was dominated by LummHR-major cells (12,394/43,653; 28.4%) and Fibro-major cells (5,438; 12.5%), with substantial representation of CD4-naive cells (3,696; 8.5%), Lumsec-basal cells (1,850; 4.2%), CD4-Treg cells (1,453; 3.3%), Mast cells (1,414; 3.2%), and Vas-capillary cells (1,336; 3.1%).
+
+At the individual-sample level, the stacked bar plot further demonstrates that these populations are not uniformly distributed across samples. The relative abundance of major epithelial, stromal, immune, and vascular populations varies considerably between individual GSMs, indicating pronounced sample-to-sample cellular heterogeneity within both Normal and Tumor groups.
+
+Overall, the analysis shows a shift in the dominant cellular landscape from Lumsec-basal cells in Normal tissue toward LummHR-major and Fibro-major populations in the Tumor cohort, together with substantial inter-sample variation in cell-type representation. These findings highlight the heterogeneous cellular architecture of the breast cancer dataset and support the subsequent cell-type-specific MAST and Reactome GSEA analyses.
 
 
 
