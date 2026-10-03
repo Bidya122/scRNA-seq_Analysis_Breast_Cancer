@@ -2654,9 +2654,87 @@ To summarize the Reactome GSEA results across cell types, the three pathways wit
 Cell-type composition was examined at two levels to characterize the cellular landscape of the breast cancer dataset.     
 **1. Overall Cell-Type Composition: Normal vs Tumor**    
 The CellTypist majority_voting annotations were used to calculate the number and proportion of cells belonging to each cell type within the Normal and Tumor groups. This analysis provides an overall view of the cellular composition of the two conditions. The resulting table reports: Cell type, Number of cells in Normal, Proportion of cells in Normal, Number of cells in Tumor, Proportion of cells in Tumor.         
-This gives a broad overview of how the distribution of annotated cell types differs between the Normal and Tumor groups.       
+This gives a broad overview of how the distribution of annotated cell types differs between the Normal and Tumor groups.  
+```bash
+library(dplyr)
 
-<img width="1265" height="721" alt="image" src="https://github.com/user-attachments/assets/3de2b367-ec8d-4b7e-9260-7e0865ec4304" />
+celltype_freq <- seurat_obj@meta.data %>%
+  dplyr::filter(
+    !is.na(Condition),
+    !is.na(majority_voting)
+  ) %>%
+  dplyr::group_by(Condition, majority_voting) %>%
+  dplyr::summarise(
+    n_cells = dplyr::n(),
+    .groups = "drop"
+  ) %>%
+  dplyr::group_by(Condition) %>%
+  dplyr::mutate(
+    frequency = n_cells / sum(n_cells) * 100
+  ) %>%
+  dplyr::ungroup()
+head(celltype_freq)
+
+
+library(ggplot2)
+
+# Common ordering of cell types across both panels
+celltype_order <- celltype_freq %>%
+  dplyr::group_by(majority_voting) %>%
+  dplyr::summarise(
+    overall_frequency = sum(frequency),
+    .groups = "drop"
+  ) %>%
+  dplyr::arrange(overall_frequency) %>%
+  dplyr::pull(majority_voting)
+
+celltype_freq$majority_voting <- factor(
+  celltype_freq$majority_voting,
+  levels = celltype_order
+)
+
+celltype_freq$Condition <- factor(
+  celltype_freq$Condition,
+  levels = c("Normal", "Tumor")
+)
+
+p_composition <- ggplot( celltype_freq, aes(x = frequency, y = majority_voting, fill = majority_voting)) +
+  geom_col(width = 0.7) +
+  facet_wrap(~Condition, ncol = 2) +
+  labs( x = "Frequency (%)",
+    y = "Cell type",
+    title = "Cell-type composition in Normal and Tumor" ) +
+  theme_classic() +
+  theme(
+    strip.text = element_text(size = 14, face = "bold"),
+    axis.text.y = element_text(size = 9),
+    axis.text.x = element_text(size = 10),
+    legend.position = "none"
+  )
+
+ggsave( filename = file.path( phase1Dir, "CellType_Composition_Normal_vs_Tumor.png"),
+  plot = p_composition,  width = 12,  height = 8,  units = "in",  dpi = 600)
+
+comparison_table <- celltype_freq %>%
+  dplyr::select(Condition, majority_voting, frequency) %>%
+  tidyr::pivot_wider(
+    names_from = Condition,
+    values_from = frequency,
+    values_fill = 0
+  ) %>%
+  dplyr::mutate(
+    Difference = Tumor - Normal
+  ) %>%
+  dplyr::arrange(desc(abs(Difference)))
+
+View(comparison_table)
+write.csv( comparison_table, file = file.path( phase1Dir,  "CellType_Composition_Normal_vs_Tumor.csv"), row.names = FALSE)
+
+```
+<img width="740" height="497" alt="image" src="https://github.com/user-attachments/assets/6be469c2-dd4d-4900-b850-fe38318e0f2c" />
+
+<img width="557" height="745" alt="image" src="https://github.com/user-attachments/assets/247bbe4c-964b-4cbe-bc15-113176bd56fa" />
+
 
 **2. Cell-Type Composition Across Individual Samples**    
 Because cells from the same sample are not independent biological replicates, composition was also examined separately for each GSM sample. For every sample, the number of cells assigned to each cell type was calculated and divided by the total number of retained cells in that sample:     
