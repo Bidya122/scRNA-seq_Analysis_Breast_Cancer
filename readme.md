@@ -2845,6 +2845,8 @@ Cell-type composition was first characterized across Normal and Tumor samples to
 This analysis provides a cell-type-resolved view of functional changes in the tumor microenvironment, including processes such as extracellular matrix remodeling, immune regulation, vascular activity, metabolism, and other biological programs supported by the data.    
 GSEA was performed to move beyond differences in individual genes and characterize coordinated biological processes within each cell type. Because the tumor microenvironment consists of multiple interacting cellular populations, pathway-level analysis allows Tumor-associated functional changes to be examined in a cell-type-specific manner. This helps identify biological processes that distinguish Tumor from Normal states while preserving the cellular context in which these changes occur. The resulting pathway profiles provide a functional layer to complement the cellular composition analysis and support the identification of TME-associated processes such as extracellular matrix remodeling, immune signaling, vascular activity, metabolic alterations, and other context-specific biological programs.    
 
+[READ THE RESULTS ABOUT IT HERE!](https://github.com/Bidya122/scRNA-seq_Analysis_Breast_Cancer/blob/main/TME_Functional_State_Analysis_README.md)
+
 
 
 
