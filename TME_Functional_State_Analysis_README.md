@@ -58,6 +58,24 @@ Fibro-major cells showed a strong Tumor-associated extracellular matrix remodeli
 In contrast, Fibro-major cells showed extensive Normal-associated enrichment of immune and cytokine signaling, including interleukin signaling, cytokine signaling in the immune system, IL-1 signaling, IL-4/IL-13 signaling, and pathways involving NF-κB and type I interferon responses. Several pathways related to RNA processing, translation, ribosome function, and cellular stress responses were also enriched toward Normal.    
 Overall, Fibro-major cells displayed a pronounced Tumor-associated ECM and stromal remodeling phenotype, characterized by coordinated collagen, proteoglycan, fibronectin, and cell–ECM interaction pathways, whereas the Normal state showed greater enrichment of immune signaling and broad cellular biosynthetic programs. The simultaneous enrichment of collagen synthesis and degradation pathways in Tumor suggests active ECM turnover and remodeling rather than simply increased collagen production.    
 
+## Celltype - LUMM HR MAJOR = Major Luminal Hormone-Receptor–positive epithelial population
+
+<img width="1066" height="2929" alt="image" src="https://github.com/user-attachments/assets/a6331e61-e923-4edd-ba61-8f6fa02b1b9b" />
+
+<img width="1097" height="736" alt="image" src="https://github.com/user-attachments/assets/3dd5a855-e170-4b7f-8a26-11abea69dd3b" />
+
+LummHR-major cells showed Tumor-associated enrichment of pathways related primarily to mitochondrial function and cellular biosynthetic activity. These included mitochondrial translation, mitochondrial protein import, mitochondrial ribosome-associated quality control, respiratory electron transport, and Complex I biogenesis. Additional enrichment of mRNA splicing, tRNA processing, translation, and cholesterol biosynthesis suggests increased mitochondrial and protein-production activity in the Tumor state.
+In contrast, the Normal state showed broader enrichment of cell signaling, immune-related pathways, extracellular matrix interactions, and epithelial developmental programs. These included cytokine and interleukin signaling, Rho GTPase and MAPK signaling, TGF-β signaling, receptor tyrosine kinase signaling, and pathways involving integrins and ECM organization. Mammary gland developmental lineages, keratinization, and cornified-envelope formation were also enriched toward Normal, which is particularly relevant to the differentiated epithelial characteristics of normal breast tissue. Overall, LummHR-major cells displayed Tumor-associated mitochondrial and biosynthetic activity, whereas the Normal state showed stronger enrichment of signaling, immune, ECM-interaction, and mammary epithelial developmental programs.    
+
+## Celltype - LUMM HR SCGB = Luminal Hormone-Receptor–positive SCGB-expressing epithelial population
+
+<img width="1066" height="1609" alt="image" src="https://github.com/user-attachments/assets/c968acf5-c7dc-4078-9e2f-71dbc85174ea" />
+
+<img width="1101" height="742" alt="image" src="https://github.com/user-attachments/assets/263fd53e-1983-457b-a963-7c65823e97e3" />
+
+LummHR-SCGB cells showed Tumor-associated enrichment of pathways related predominantly to mitochondrial function and energy metabolism, including respiratory electron transport, mitochondrial translation, mitochondrial protein import, Complex I biogenesis, and aerobic respiration. Translation and protein localization pathways were also enriched toward Tumor, suggesting increased mitochondrial and biosynthetic activity in this population.
+In contrast, the Normal state showed broader enrichment of cell signaling, immune-related pathways, extracellular matrix interactions, and epithelial developmental programs. These included cytokine and interleukin signaling, receptor tyrosine kinase and GPCR signaling, TGF-β-related pathways, and several ECM-associated processes such as collagen formation, ECM organization, integrin interactions, and ECM proteoglycans. Mammary gland developmental pathways, keratinization, and cornified-envelope formation were also enriched toward Normal.
+Overall, LummHR-SCGB cells displayed Tumor-associated mitochondrial and respiratory activity, whereas the Normal state showed stronger enrichment of signaling, immune, ECM-related, and mammary epithelial developmental programs.    
 
 
 
