@@ -21,6 +21,15 @@ Switched → Class-switched, meaning they have undergone immunoglobulin class sw
 
 The bmem_switched population showed a single significant Tumor-associated pathway, phosphorylation of CD3 and TCR zeta chains (NES = 2.03, adjusted P = 0.0185), a pathway associated with T-cell receptor signaling. As this population was annotated as switched memory B cells, this isolated enrichment should be interpreted cautiously and is not sufficient on its own to define a broader functional state. No additional significant pathways were identified at the applied adjusted P < 0.05 threshold.    
 
+## Celltype - CD4-NAIVE (NAIVE T-CELLS)
+
+<img width="1066" height="2281" alt="image" src="https://github.com/user-attachments/assets/02363514-1c95-4a2a-82b0-917c4657458d" />
+
+<img width="1107" height="748" alt="image" src="https://github.com/user-attachments/assets/4a93bf98-c392-40b7-a852-bde8dc8e9b29" />
+
+CD4-naive T cells showed Tumor-associated enrichment of pathways related to T-cell signaling and cellular interactions, including second-messenger generation, RAC1 and CDC42 GTPase cycling, phosphorylation of CD3 and TCR zeta chains, and immunoregulatory interactions between lymphoid and non-lymphoid cells. PI3K-related signaling was also enriched toward Tumor. Together, these pathways suggest altered T-cell signaling and cell-interaction programs within the breast tumor microenvironment. As naive CD4 T cells can undergo activation and differentiate into different effector or regulatory states, these changes may reflect an altered signaling environment associated with subsequent T-cell functional responses, although a specific differentiation state cannot be inferred from these pathways alone. In contrast, the Normal-associated profile included broader enrichment of interleukin signaling, cellular stress responses, immune-related processes, cell-cycle-associated pathways, and developmental programs. Pathways related to cellular responses to hypoxia and regulation of PD-L1 were also enriched toward Normal. Strong enrichment of mammary gland developmental, keratinization, and cornified-envelope pathways was observed in the Normal state; because these pathways are unexpected for CD4-naive T cells, they should be interpreted cautiously and verified using the underlying leading-edge genes.    
+Overall, CD4-naive cells exhibited Tumor-associated enrichment of T-cell signaling and interaction programs, while Normal cells showed a broader set of immune, stress-response, developmental, and regulatory pathways.    
+
 
 
 
