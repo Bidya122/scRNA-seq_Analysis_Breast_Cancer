@@ -2781,6 +2781,70 @@ The sample-level composition analysis revealed substantial heterogeneity in cell
 At the individual-sample level, the stacked bar plot further demonstrates that these populations are not uniformly distributed across samples. The relative abundance of major epithelial, stromal, immune, and vascular populations varies considerably between individual GSMs, indicating pronounced sample-to-sample cellular heterogeneity within both Normal and Tumor groups.    
 Overall, the analysis shows a shift in the dominant cellular landscape from Lumsec-basal cells in Normal tissue toward LummHR-major and Fibro-major populations in the Tumor cohort, together with substantial inter-sample variation in cell-type representation. These findings highlight the heterogeneous cellular architecture of the breast cancer dataset and support the subsequent cell-type-specific MAST and Reactome GSEA analyses.     
 
+## Tumor Microenvironment Functional State Analysis
+
+```bash
+library(openxlsx)
+library(dplyr)
+
+# Output directory
+gsea_workbook_dir <- file.path(phase1Dir, "GSEA") ##GSEA folder we made earlier
+dir.create(  gsea_workbook_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Create workbook
+wb <- createWorkbook()
+
+# Get all cell types
+celltypes <- sort(unique(gsea_all$CellType))
+
+for (ct in celltypes) {
+
+  # Extract significant GSEA pathways for this cell type
+  ct_data <- gsea_all %>%
+    dplyr::filter( CellType == ct,  !is.na(p.adjust),  p.adjust < 0.05) %>%
+    dplyr::select( Description, NES, p.adjust, pvalue, setSize ) %>%
+    dplyr::arrange(desc(NES))
+
+  # Excel sheet names cannot exceed 31 characters
+  sheet_name <- substr(ct, 1, 31)
+
+  # Make sure sheet name is unique
+  if (sheet_name %in% names(wb)) {
+    sheet_name <- paste0(  substr(ct, 1, 27), "_", which(names(wb) == sheet_name) ) }
+
+  addWorksheet(wb, sheet_name)
+
+  if (nrow(ct_data) > 0) {  writeData( wb, sheet = sheet_name, x = ct_data,  startRow = 1, startCol = 1 )
+
+    # Formatting
+    header_style <- createStyle( textDecoration = "bold",  halign = "center", border = "Bottom")
+
+    addStyle( wb, sheet = sheet_name, style = header_style, rows = 1, cols = 1:ncol(ct_data), gridExpand = TRUE)
+
+    # Freeze header
+    freezePane( wb, sheet = sheet_name, firstRow = TRUE)
+
+    # Set column widths
+    setColWidths( wb, sheet = sheet_name, cols = 1,  widths = 55 )
+
+    setColWidths( wb, sheet = sheet_name,  cols = 2:5, widths = 15 )
+
+  } else { writeData( wb, sheet = sheet_name,  x = data.frame(
+        Message = "No pathways with adjusted P < 0.05" )
+    )
+  }
+}
+
+# Save workbook
+gsea_workbook_file <- file.path( gsea_workbook_dir, "GSEA_Tumor_vs_Normal_All_CellTypes.xlsx")
+
+saveWorkbook(  wb,  gsea_workbook_file, overwrite = TRUE)
+gsea_workbook_file
+```
+Cell-type composition was first characterized across Normal and Tumor samples to define the cellular landscape of the breast tumor microenvironment. Subsequently, cell-type-specific differential expression and Reactome GSEA were used to identify biological processes associated with the Tumor versus Normal state within each cell population. GSEA results were organized into a single workbook with separate sheets for each cell type, containing significant pathways, normalized enrichment scores (NES), and adjusted P-values. Pathways were interpreted within their respective cell types to identify coherent biological programs, rather than relying solely on pathway recurrence across cell types.    
+This analysis provides a cell-type-resolved view of functional changes in the tumor microenvironment, including processes such as extracellular matrix remodeling, immune regulation, vascular activity, metabolism, and other biological programs supported by the data.    
+GSEA was performed to move beyond differences in individual genes and characterize coordinated biological processes within each cell type. Because the tumor microenvironment consists of multiple interacting cellular populations, pathway-level analysis allows Tumor-associated functional changes to be examined in a cell-type-specific manner. This helps identify biological processes that distinguish Tumor from Normal states while preserving the cellular context in which these changes occur. The resulting pathway profiles provide a functional layer to complement the cellular composition analysis and support the identification of TME-associated processes such as extracellular matrix remodeling, immune signaling, vascular activity, metabolic alterations, and other context-specific biological programs.    
+
 
 
 
