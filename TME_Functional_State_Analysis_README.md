@@ -30,8 +30,33 @@ The bmem_switched population showed a single significant Tumor-associated pathwa
 CD4-naive T cells showed Tumor-associated enrichment of pathways related to T-cell signaling and cellular interactions, including second-messenger generation, RAC1 and CDC42 GTPase cycling, phosphorylation of CD3 and TCR zeta chains, and immunoregulatory interactions between lymphoid and non-lymphoid cells. PI3K-related signaling was also enriched toward Tumor. Together, these pathways suggest altered T-cell signaling and cell-interaction programs within the breast tumor microenvironment. As naive CD4 T cells can undergo activation and differentiate into different effector or regulatory states, these changes may reflect an altered signaling environment associated with subsequent T-cell functional responses, although a specific differentiation state cannot be inferred from these pathways alone. In contrast, the Normal-associated profile included broader enrichment of interleukin signaling, cellular stress responses, immune-related processes, cell-cycle-associated pathways, and developmental programs. Pathways related to cellular responses to hypoxia and regulation of PD-L1 were also enriched toward Normal. Strong enrichment of mammary gland developmental, keratinization, and cornified-envelope pathways was observed in the Normal state; because these pathways are unexpected for CD4-naive T cells, they should be interpreted cautiously and verified using the underlying leading-edge genes.    
 Overall, CD4-naive cells exhibited Tumor-associated enrichment of T-cell signaling and interaction programs, while Normal cells showed a broader set of immune, stress-response, developmental, and regulatory pathways.    
 
+## Celltype - CD4-TEM = CD4 Effector Memory T Cells
 
+<img width="1066" height="97" alt="image" src="https://github.com/user-attachments/assets/1363aeed-ecfc-488b-99ce-84cbacb34e75" />
 
+<img width="1097" height="737" alt="image" src="https://github.com/user-attachments/assets/bbde8526-a896-4b8e-bca8-e37aa8d7fc5c" />
+
+CD4-Tem cells showed Tumor-associated enrichment of the Cell Cycle pathway (NES = 1.68, adjusted P = 0.040), suggesting increased cell-cycle-related activity in the Tumor state. In contrast, Interleukin-4 and Interleukin-13 signaling (NES = −1.94, adjusted P = 0.045) and Interleukin-10 signaling (NES = −2.13, adjusted P = 0.017) were enriched toward Normal. These pathways indicate differences in cytokine-associated signaling within the CD4-Tem population between Normal and Tumor breast tissue.    
+Overall, CD4-Tem cells showed a relatively limited functional shift, characterized by Tumor-associated cell-cycle activity and Normal-associated IL-4/IL-13 and IL-10 signaling.
+
+## Celltype - CD4-TH LIKE = CD4 T-helper-like cells
+
+<img width="1170" height="241" alt="image" src="https://github.com/user-attachments/assets/0c257d34-8b70-423c-b5cc-40469439482e" />
+
+<img width="1097" height="738" alt="image" src="https://github.com/user-attachments/assets/cb75a001-4f38-4b8d-ba88-6036d718b584" />
+
+CD4-Th-like cells showed exclusively Normal-associated enrichment, with pathways related to mammary gland developmental lineages, extracellular matrix organization, RND3 GTPase cycling, developmental cell lineages, and post-translational protein phosphorylation. Strong enrichment was also observed for keratinization and cornified-envelope formation, together with regulation of IGF transport and uptake by IGF-binding proteins. The enrichment of mammary developmental, keratinization, and cornified-envelope pathways is notable but unexpected for a CD4-Th-like population and should therefore be interpreted cautiously. These pathways may warrant examination of the underlying leading-edge genes before assigning a specific biological meaning.    
+Overall, the CD4-Th-like population showed a predominantly Normal-associated functional profile, with no significant Tumor-associated pathways detected at the adjusted P < 0.05 threshold.    
+
+## Celltype - FIBRO-MAJOR = Major Fibroblast Population
+
+<img width="1066" height="1921" alt="image" src="https://github.com/user-attachments/assets/eaf2ac3f-9bf2-4a2a-af60-bbe6da0d124a" />
+
+<img width="1105" height="746" alt="image" src="https://github.com/user-attachments/assets/2f5c1002-654c-4838-8a7f-eb5cebc59773" />
+
+Fibro-major cells showed a strong Tumor-associated extracellular matrix remodeling program, with prominent enrichment of collagen fibril assembly, collagen formation, collagen biosynthesis and modification, collagen degradation, extracellular matrix organization, ECM proteoglycans, fibronectin matrix formation, and elastic fibre formation. Pathways involving integrin and non-integrin ECM interactions, MET signaling, and cell motility were also enriched toward Tumor, indicating extensive changes in ECM organization, remodeling, and cell–matrix interactions within the breast tumor microenvironment. Additional enrichment of PDGF signaling and IGF-related regulation further supports altered stromal signaling in the Tumor state.    
+In contrast, Fibro-major cells showed extensive Normal-associated enrichment of immune and cytokine signaling, including interleukin signaling, cytokine signaling in the immune system, IL-1 signaling, IL-4/IL-13 signaling, and pathways involving NF-κB and type I interferon responses. Several pathways related to RNA processing, translation, ribosome function, and cellular stress responses were also enriched toward Normal.    
+Overall, Fibro-major cells displayed a pronounced Tumor-associated ECM and stromal remodeling phenotype, characterized by coordinated collagen, proteoglycan, fibronectin, and cell–ECM interaction pathways, whereas the Normal state showed greater enrichment of immune signaling and broad cellular biosynthetic programs. The simultaneous enrichment of collagen synthesis and degradation pathways in Tumor suggests active ECM turnover and remodeling rather than simply increased collagen production.    
 
 
 
