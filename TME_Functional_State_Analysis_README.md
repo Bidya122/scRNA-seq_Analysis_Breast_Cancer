@@ -142,7 +142,29 @@ Plasma_IgA cells showed limited Tumor-associated enrichment of FGFR1-related sig
 
 Vas-arterial cells showed Tumor-associated enrichment of G alpha(s) signaling, suggesting altered GPCR-associated signaling activity in the Tumor state. In contrast, the Normal state showed enrichment of developmental and epithelial-associated programs, including mammary gland developmental lineages, keratinization, and cornified-envelope formation. Translation and broader developmental biology pathways were also enriched toward Normal. The epithelial-associated pathways are unexpected for an arterial endothelial population and should therefore be interpreted cautiously. Overall, Vas-arterial cells showed a limited Tumor-associated signaling change, while Normal cells displayed stronger developmental and epithelial-associated pathway enrichment.    
 
+## Celltype - VAS CAPILLARY
 
+<img width="1066" height="721" alt="image" src="https://github.com/user-attachments/assets/c9a72fc7-eb97-4f74-8396-4bbd16222c2d" />
+
+<img width="1103" height="741" alt="image" src="https://github.com/user-attachments/assets/17ac91f8-feba-469e-b268-3aed48795376" />
+
+Vas-capillary cells showed exclusively Normal-associated enrichment, with prominent pathways related to cytokine and interleukin signaling, including IL-6, IL-4/IL-13, and IL-10 signaling. Multiple pathways involved in translation, rRNA processing, and ribosome function were also enriched toward Normal. Additional Normal-associated enrichment was observed for mammary gland developmental and epithelial differentiation programs, including keratinization and cornified-envelope formation. Because these epithelial-associated pathways are unexpected in capillary endothelial cells, they should be interpreted cautiously and ideally examined through their leading-edge genes. Overall, Vas-capillary cells showed a predominantly Normal-associated immune-signaling and cellular biosynthetic profile, with no significant Tumor-associated pathways detected.    
+
+## Celltype - VAS VENOUS 
+
+<img width="1066" height="1321" alt="image" src="https://github.com/user-attachments/assets/5c9d7e59-ec9a-47e1-b7b2-05b3653fb338" />
+
+<img width="1100" height="742" alt="image" src="https://github.com/user-attachments/assets/4135efe1-5f77-4f27-a706-c2a7440eeb97" />
+
+Vas-venous cells showed limited Tumor-associated enrichment of G alpha(s) signaling and Phase I functionalization of compounds. In contrast, the Normal state showed strong enrichment of cytokine and interleukin signaling, including IL-4/IL-13 and IL-10 pathways, together with extensive translation, ribosome, mRNA processing, and protein-quality-control programs. Chemokine receptor and GPCR-related signaling were also enriched toward Normal. Mammary gland developmental and epithelial differentiation pathways, including keratinization and cornified-envelope formation, were strongly enriched toward Normal but are unexpected for a venous endothelial population and should be interpreted cautiously. Overall, Vas-venous cells displayed a predominantly Normal-associated immune-signaling and biosynthetic profile, with only limited Tumor-associated signaling changes.     
+
+## Celltype - VSMC
+
+<img width="1066" height="313" alt="image" src="https://github.com/user-attachments/assets/85a76461-9ca8-408d-ab47-6eb84505a7de" />
+
+<img width="1105" height="741" alt="image" src="https://github.com/user-attachments/assets/4e352469-04af-4359-af5b-73ae027d0cba" />
+
+VSMCs showed exclusively Normal-associated pathway enrichment, with significant enrichment of cell junction organization, cell–cell communication, and IL-10 signaling. Several developmental pathways, including mammary gland and broader cell-lineage programs, were also enriched toward the Normal state. Strong enrichment of keratinization and cornified-envelope pathways was observed but is unexpected for VSMCs and should therefore be interpreted cautiously, as these signals may reflect shared genes, annotation effects, or ambient RNA. Overall, VSMCs displayed a predominantly Normal-associated structural, intercellular communication, and IL-10 signaling profile, with no significant Tumor-associated pathways.    
 
 
 
