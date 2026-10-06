@@ -86,5 +86,13 @@ Overall, LummHR-SCGB cells displayed Tumor-associated mitochondrial and respirat
 Lumsec-basal cells showed strong Tumor-associated enrichment of RNA processing, translation, and mitochondrial activity. Major pathways included mRNA splicing, mRNA processing, translation, rRNA processing, mitochondrial translation, mitochondrial protein import, Complex I/IV assembly, and respiratory electron transport. Keratinization and cornified-envelope formation were also enriched toward Tumor, suggesting altered epithelial differentiation programs. In contrast, the Normal state showed stronger ECM and cell–microenvironment signaling, including extracellular matrix organization, collagen formation and degradation, ECM proteoglycans, laminin/integrin interactions, cytokine and interleukin signaling, and receptor-mediated pathways such as GPCR, RTK, PDGF, insulin, and IGF signaling.    
 Overall, Lumsec-basal cells displayed Tumor-associated biosynthetic and mitochondrial activity, whereas Normal cells showed stronger ECM organization, signaling, and tissue–microenvironment interaction programs.    
 
+## Celltype - Luminal Secretory KIT-expressing epithelial population
 
+<img width="1066" height="121" alt="image" src="https://github.com/user-attachments/assets/74e24bc0-f58d-4742-809a-b794035bc55e" />
+
+<img width="1102" height="740" alt="image" src="https://github.com/user-attachments/assets/b2f39577-90e1-4462-93ae-ee14cce3c102" />
+
+Lumsec-KIT cells showed exclusively Normal-associated enrichment, with pathways related to the immune system, innate immune responses, post-translational protein modification, and vesicle-mediated transport. This suggests stronger immune-related and cellular transport activity in Lumsec-KIT cells from Normal breast tissue compared with Tumor. Overall, Lumsec-KIT displayed a limited Normal-associated functional profile, with no significant Tumor-associated pathways detected at the adjusted P < 0.05 threshold.    
+
+## Celltype - 
 
