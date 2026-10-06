@@ -94,5 +94,13 @@ Overall, Lumsec-basal cells displayed Tumor-associated biosynthetic and mitochon
 
 Lumsec-KIT cells showed exclusively Normal-associated enrichment, with pathways related to the immune system, innate immune responses, post-translational protein modification, and vesicle-mediated transport. This suggests stronger immune-related and cellular transport activity in Lumsec-KIT cells from Normal breast tissue compared with Tumor. Overall, Lumsec-KIT displayed a limited Normal-associated functional profile, with no significant Tumor-associated pathways detected at the adjusted P < 0.05 threshold.    
 
-## Celltype - 
+## Celltype - Lipid-associated Macrophage population
+
+<img width="1066" height="409" alt="image" src="https://github.com/user-attachments/assets/164a34ff-2467-4e94-af5f-586cf6fbb6eb" />
+
+<img width="1101" height="740" alt="image" src="https://github.com/user-attachments/assets/1900763a-bf90-4bca-9200-68e29274dcf0" />
+
+Macro-lipo cells showed Tumor-associated enrichment of cholesterol-related signaling, particularly NR1H2/NR1H3-mediated regulation of cholesterol transport and efflux. In contrast, the Normal state showed enrichment of ribosome quality-control, ECM interaction, transport, and developmental pathways. Notably, mammary gland luminal epithelial developmental pathways were strongly enriched toward Normal, together with keratinization and other tissue-development programs. These epithelial-associated pathways are unexpected for a macrophage population and should therefore be interpreted cautiously. Overall, Macro-lipo showed a Tumor-associated cholesterol-regulatory program, whereas Normal cells displayed broader developmental and cellular maintenance programs.    
+
+
 
