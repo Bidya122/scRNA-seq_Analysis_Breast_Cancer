@@ -2847,6 +2847,10 @@ GSEA was performed to move beyond differences in individual genes and characteri
 
 [READ THE RESULTS ABOUT IT HERE!](https://github.com/Bidya122/scRNA-seq_Analysis_Breast_Cancer/blob/main/TME_Functional_State_Analysis_README.md)
 
+The cell-type-specific pathway analysis revealed distinct functional changes between Tumor and Normal tissue across the major TME populations. Tumor-associated programs were characterized primarily by increased mitochondrial activity, protein synthesis, RNA processing, and extracellular matrix remodeling in specific epithelial and stromal populations. In contrast, Normal-associated pathways were dominated by cytokine and interleukin signaling, developmental programs, and tissue-associated signaling processes across several cell types. These results demonstrate that the tumor microenvironment undergoes cell-type-specific functional remodeling rather than a uniform change across all populations. Pathways occurring in biologically unexpected cell types were interpreted cautiously and require further validation using their leading-edge genes. Overall, this analysis provides a functional basis for subsequent investigation of TME-wide interactions and regulatory mechanisms.    
+
+
+
 
 
 
