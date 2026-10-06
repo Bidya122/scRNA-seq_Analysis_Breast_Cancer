@@ -102,5 +102,13 @@ Lumsec-KIT cells showed exclusively Normal-associated enrichment, with pathways 
 
 Macro-lipo cells showed Tumor-associated enrichment of cholesterol-related signaling, particularly NR1H2/NR1H3-mediated regulation of cholesterol transport and efflux. In contrast, the Normal state showed enrichment of ribosome quality-control, ECM interaction, transport, and developmental pathways. Notably, mammary gland luminal epithelial developmental pathways were strongly enriched toward Normal, together with keratinization and other tissue-development programs. These epithelial-associated pathways are unexpected for a macrophage population and should therefore be interpreted cautiously. Overall, Macro-lipo showed a Tumor-associated cholesterol-regulatory program, whereas Normal cells displayed broader developmental and cellular maintenance programs.    
 
+## Celltype - M2-like CXCL-expressing Macrophage population (m2 = M2-like / alternatively activated macrophage phenotype, CXCL = Chemokine (C-X-C motif) ligand–associated) 
+
+<img width="1066" height="97" alt="image" src="https://github.com/user-attachments/assets/02e61ea3-9113-477d-84ae-c90c4e1d76f5" />
+
+<img width="1097" height="738" alt="image" src="https://github.com/user-attachments/assets/9d0726a2-e21e-4805-9a8e-164e9e95e885" />
+
+Macro-m2-CXCL cells showed Tumor-associated enrichment of lipid and nuclear receptor-related programs, including plasma lipoprotein assembly, remodeling and clearance, and nuclear receptor transcriptional signaling. Regulation of TP53 activity was also enriched toward Tumor, suggesting altered cellular stress and regulatory signaling. Overall, Macro-m2-CXCL cells displayed a Tumor-associated lipid-handling and transcriptional regulatory phenotype, with no significant Normal-associated pathways detected at the adjusted P < 0.05 threshold.    
 
 
+ 
