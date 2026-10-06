@@ -110,5 +110,40 @@ Macro-lipo cells showed Tumor-associated enrichment of cholesterol-related signa
 
 Macro-m2-CXCL cells showed Tumor-associated enrichment of lipid and nuclear receptor-related programs, including plasma lipoprotein assembly, remodeling and clearance, and nuclear receptor transcriptional signaling. Regulation of TP53 activity was also enriched toward Tumor, suggesting altered cellular stress and regulatory signaling. Overall, Macro-m2-CXCL cells displayed a Tumor-associated lipid-handling and transcriptional regulatory phenotype, with no significant Normal-associated pathways detected at the adjusted P < 0.05 threshold.    
 
+## Celltype - NK-ILCs = Natural Killer–Innate Lymphoid Cells
+
+<img width="1066" height="769" alt="image" src="https://github.com/user-attachments/assets/8acef3e0-41c5-4699-aa69-e592df9a4796" />
+
+<img width="1101" height="747" alt="image" src="https://github.com/user-attachments/assets/0f927102-d8b0-4c67-9be1-4067bc8fb4bf" />
+
+NK-ILCs showed strong Tumor-associated enrichment of translation and protein-quality-control pathways, including peptide elongation and termination, ribosome assembly and quality control, nonsense-mediated decay, and mRNA regulation. Clathrin-mediated endocytosis and membrane trafficking were also enriched toward Tumor. T-cell regulatory pathways involving PD-1 co-inhibition and CD28-family regulation were modestly enriched toward Tumor. In contrast, chemokine receptor and peptide ligand-receptor pathways were enriched toward Normal, suggesting differences in chemokine-mediated cellular communication. Overall, NK-ILCs displayed a predominantly Tumor-associated translational and protein-quality-control program, with altered immune-receptor signaling between Tumor and Normal states.    
+
+## Celltype - PERICYTES
+
+<img width="1066" height="289" alt="image" src="https://github.com/user-attachments/assets/6d7fe4c9-8112-4de8-a607-e060e39d773c" />
+
+<img width="1102" height="743" alt="image" src="https://github.com/user-attachments/assets/cefea209-38a5-4f34-8a75-ae390b5a4550" />  
+
+Pericytes showed Tumor-associated enrichment of extracellular matrix remodeling, including collagen biosynthesis and modification, collagen chain trimerization, collagen formation, ECM proteoglycans, extracellular matrix organization, and ECM degradation. This indicates altered collagen production and active ECM remodeling within the Tumor-associated perivascular compartment. In contrast, the Normal state showed enrichment of IL-10 signaling and developmental programs, including mammary gland and integumentary developmental lineages, keratinization, and cornified-envelope formation. Overall, pericytes displayed a Tumor-associated ECM and collagen remodeling program, whereas Normal pericytes showed stronger developmental and IL-10-associated signaling.    
+
+## Celltype - PLASMA IgA 
+
+<img width="1066" height="241" alt="image" src="https://github.com/user-attachments/assets/442e4e9c-86a9-4597-bf8a-1a30bfa1a2fa" />
+
+<img width="1101" height="747" alt="image" src="https://github.com/user-attachments/assets/db8db0b0-040a-4c39-ac1c-451294cdfae9" />
+
+Plasma_IgA cells showed limited Tumor-associated enrichment of FGFR1-related signaling, including cytosolic FGFR1 fusion mutant signaling and FGFR1 receptor activation. These pathways should be interpreted cautiously because they represent specific Reactome pathway annotations rather than evidence of an FGFR1 mutation. In contrast, the Normal state showed strong enrichment of mammary and developmental programs, particularly mammary gland luminal epithelial development, together with keratinization, cornified-envelope formation, and broader developmental lineage pathways. These epithelial-associated pathways are unexpected for plasma cells and should therefore be interpreted cautiously. Overall, plasma_IgA showed a limited Tumor-associated FGFR1 signaling signal, while Normal-associated developmental pathways were prominent but may reflect annotation or cellular contamination effects.    
+
+## Celltype - VAS ARTREIAL
+
+<img width="1066" height="241" alt="image" src="https://github.com/user-attachments/assets/88ec2c31-a6b2-421e-a8c0-e0b7153b8de1" />
+
+<img width="1100" height="740" alt="image" src="https://github.com/user-attachments/assets/bc53c7cc-55a9-46a2-b9c2-64ee717b1b64" /> 
+
+Vas-arterial cells showed Tumor-associated enrichment of G alpha(s) signaling, suggesting altered GPCR-associated signaling activity in the Tumor state. In contrast, the Normal state showed enrichment of developmental and epithelial-associated programs, including mammary gland developmental lineages, keratinization, and cornified-envelope formation. Translation and broader developmental biology pathways were also enriched toward Normal. The epithelial-associated pathways are unexpected for an arterial endothelial population and should therefore be interpreted cautiously. Overall, Vas-arterial cells showed a limited Tumor-associated signaling change, while Normal cells displayed stronger developmental and epithelial-associated pathway enrichment.    
+
+
+
+
 
  
