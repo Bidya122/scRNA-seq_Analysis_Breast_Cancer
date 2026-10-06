@@ -77,5 +77,14 @@ LummHR-SCGB cells showed Tumor-associated enrichment of pathways related predomi
 In contrast, the Normal state showed broader enrichment of cell signaling, immune-related pathways, extracellular matrix interactions, and epithelial developmental programs. These included cytokine and interleukin signaling, receptor tyrosine kinase and GPCR signaling, TGF-β-related pathways, and several ECM-associated processes such as collagen formation, ECM organization, integrin interactions, and ECM proteoglycans. Mammary gland developmental pathways, keratinization, and cornified-envelope formation were also enriched toward Normal.
 Overall, LummHR-SCGB cells displayed Tumor-associated mitochondrial and respiratory activity, whereas the Normal state showed stronger enrichment of signaling, immune, ECM-related, and mammary epithelial developmental programs.    
 
+## Celltype - LUMMSEC BASAL = Luminal Secretory–Basal epithelial population
+
+<img width="1066" height="2401" alt="image" src="https://github.com/user-attachments/assets/0fbae02d-55c4-416f-ae35-3429a6a98bff" />
+
+<img width="1100" height="737" alt="image" src="https://github.com/user-attachments/assets/6d286412-eeae-468f-a6e2-27446dceee22" />
+
+Lumsec-basal cells showed strong Tumor-associated enrichment of RNA processing, translation, and mitochondrial activity. Major pathways included mRNA splicing, mRNA processing, translation, rRNA processing, mitochondrial translation, mitochondrial protein import, Complex I/IV assembly, and respiratory electron transport. Keratinization and cornified-envelope formation were also enriched toward Tumor, suggesting altered epithelial differentiation programs. In contrast, the Normal state showed stronger ECM and cell–microenvironment signaling, including extracellular matrix organization, collagen formation and degradation, ECM proteoglycans, laminin/integrin interactions, cytokine and interleukin signaling, and receptor-mediated pathways such as GPCR, RTK, PDGF, insulin, and IGF signaling.    
+Overall, Lumsec-basal cells displayed Tumor-associated biosynthetic and mitochondrial activity, whereas Normal cells showed stronger ECM organization, signaling, and tissue–microenvironment interaction programs.    
+
 
 
