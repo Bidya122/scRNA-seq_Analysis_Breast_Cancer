@@ -2849,6 +2849,64 @@ GSEA was performed to move beyond differences in individual genes and characteri
 
 The cell-type-specific pathway analysis revealed distinct functional changes between Tumor and Normal tissue across the major TME populations. Tumor-associated programs were characterized primarily by increased mitochondrial activity, protein synthesis, RNA processing, and extracellular matrix remodeling in specific epithelial and stromal populations. In contrast, Normal-associated pathways were dominated by cytokine and interleukin signaling, developmental programs, and tissue-associated signaling processes across several cell types. These results demonstrate that the tumor microenvironment undergoes cell-type-specific functional remodeling rather than a uniform change across all populations. Pathways occurring in biologically unexpected cell types were interpreted cautiously and require further validation using their leading-edge genes. Overall, this analysis provides a functional basis for subsequent investigation of TME-wide interactions and regulatory mechanisms.    
 
+## Copy Number Variation Analysis in the Breast Cancer Dataset
+
+As an extension of the existing breast cancer dataset analysis, this workflow incorporates Copy Number Variation (CNV) analysis to explore genomic alterations associated with breast cancer. CNVs, including genomic amplifications and deletions, can contribute to breast cancer development and progression by altering the copy number of cancer-associated genes. Integrating CNV analysis with the existing workflow can provide an additional perspective on the molecular characteristics of breast cancer.    
+
+For performing a sanity check before moving to the analysis.
+```bash
+seurat_cnv <- readRDS( file.path(  phase1Dir,  "GSE245601_seurat_phase1_normal_vs_tumor_control.rds" ))
+Assays(seurat_cnv)
+Layers(seurat_cnv[["RNA"]])
+
+count_layers <- Layers(seurat_cnv[["RNA"]])
+count_layers
+length(count_layers)
+
+# Join the 12 raw count layers
+library(Seurat)
+seurat_cnv_joined <- JoinLayers( seurat_cnv, assay = "RNA")
+
+# Check the resulting RNA layers
+Layers(seurat_cnv_joined[["RNA"]]) #"counts"
+
+counts_mat <- LayerData( seurat_cnv_joined, assay = "RNA",  layer = "counts")
+
+# Check dimensions: genes × cells
+dim(counts_mat) #17430 57420
+
+# Check whether the matrix has any nonzero counts
+sum(counts_mat != 0) #110663009
+
+# Inspect a small section of the matrix
+counts_mat[1:5, 1:5]
+
+# Check for missing values
+anyNA(counts_mat) #FALSE
+
+# Check the minimum and maximum count
+min(counts_mat) #0
+max(counts_mat) #8257
+
+# Check whether all counts are nonnegative integers
+all(counts_mat@x >= 0) #TRUE
+all(counts_mat@x == round(counts_mat@x)) #TRUE
+
+#verify that your sample metadata correctly identifies normal and tumor cells.
+# Inspect available metadata columns
+colnames(seurat_cnv_joined[[]])
+
+# Check sample identities
+table(seurat_cnv_joined$orig.ident)
+
+# Inspect Conditions
+unique(seurat_cnv_joined$Condition)
+table(seurat_cnv_joined$Condition, useNA = "ifany")
+table( seurat_cnv_joined$orig.ident, seurat_cnv_joined$Condition, useNA = "ifany" )
+
+# Check for duplicate gene names
+sum(duplicated(rownames(counts_mat)))
+```
 
 
 
